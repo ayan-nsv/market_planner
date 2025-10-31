@@ -1,0 +1,5 @@
+/venv
+cred.json
+__pycache__
+.env
+deploy.sh
