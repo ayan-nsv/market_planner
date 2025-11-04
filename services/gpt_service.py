@@ -5,7 +5,6 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-# client = OpenAI( api_key=os.getenv("OPENAI_API_KEY"))
 
 _openai_client = None
 
@@ -25,6 +24,9 @@ def generate_all_themes(company_data):
     keywords = company_data['keywords']
     target_group = company_data['target_group']
     theme_colors = company_data['theme_colors']
+    tone_analysis = company_data['tone_analysis']
+    products = company_data['products']
+    product_categories = company_data['product_categories']
 
 
     system_prompt = """
@@ -76,9 +78,17 @@ def generate_all_themes(company_data):
                 Keywords: {keywords}
                 Target Group: {target_group}
                 theme_colors = {theme_colors}
+                tone_analysis = {tone_analysis}
+                products = {products}
+                product_categories = {product_categories}
 
-                Determine the location from the address, consider local seasonal/cultural events for each month, and return 12 months of creative themes in the exact JSON format required.
-            """
+                Determine the location from the provided address and identify its country.
+                Generate all monthly themes strictly based on local seasonal patterns, festivals, and cultural observances in that country only.
+                Exclude holidays or events not celebrated or widely recognized in that region (e.g., exclude “Thanksgiving” or “Fourth of July” for European countries).
+                If a month does not have a major event, base the theme on seasonal lifestyle or weather trends relevant to that country.
+                Ensure every theme’s title and description clearly match local culture and climate.
+                Return 12 months of creative themes in the exact JSON format required.
+                """
 
     client = get_openai_client()
     response = client.chat.completions.create(
@@ -106,6 +116,9 @@ def generate_theme(company_data, month, existing_themes=None):
     keywords = company_data['keywords']
     target_group = company_data['target_group']
     theme_colors = company_data['theme_colors']
+    tone_analysis = company_data['tone_analysis']
+    products = company_data['products']
+    product_categories = company_data['product_categories']
 
     system_prompt = """
     You are a social media content strategist that generates engaging monthly themes 
@@ -133,6 +146,9 @@ def generate_theme(company_data, month, existing_themes=None):
             - Keywords: {keywords}
             - Target Audience: {target_group}
             - Theme Colors: {theme_colors}
+            - Tone_analysis = {tone_analysis}
+            - Products = {products}
+            - Product_categories = {product_categories}
 
             {existing_themes_context}
 
@@ -204,6 +220,9 @@ def generate_instagram_post(company_data, theme, theme_description):
             - Location: {company_data['address']}
             - Target Audience: {company_data['target_group']}
             - Keywords: {company_data['keywords']}
+            - Tone_analysis = {company_data['tone_analysis']}
+            - Products = {company_data['products']}
+            - Product_categories = {company_data['product_categories']}
 
             THEME:
             - Title: {theme}
@@ -211,7 +230,7 @@ def generate_instagram_post(company_data, theme, theme_description):
 
             INSTAGRAM-SPECIFIC REQUIREMENTS:
             - Visual-focused, creative, engaging for younger audiences
-            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images should NOT contain any text, logos, or watermarks. Focus on visual elements only.
+            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on visual elements only.
             - CAPTIONS: Should be engaging, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures. should be of the native language of the company location: Write natural, conversational captions in the company's native language that match the brand personality. No emojis or special characters allowed.
             - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Instagram-specific tags, should be of the native language of the company location: Create a balanced set of hashtags in the native language, combining broad industry terms with specific content themes.
             - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design), should be of the native language of the company location: Write short, powerful phrases in native language that can be added as graphic elements during design.
@@ -249,6 +268,9 @@ def generate_linkedin_post(company_data, theme, theme_description):
             - Location: {company_data['address']}
             - Target Audience: {company_data['target_group']}
             - Keywords: {company_data['keywords']}
+            - Tone_analysis = {company_data['tone_analysis']}
+            - Products = {company_data['products']}
+            - Product_categories = {company_data['product_categories']}
 
             THEME:
             - Title: {theme}
@@ -256,7 +278,7 @@ def generate_linkedin_post(company_data, theme, theme_description):
 
             LINKEDIN-SPECIFIC REQUIREMENTS:
             - Professional, business-oriented, industry insights
-            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images should NOT contain any text, logos, or watermarks. Focus on professional visual elements.
+            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on professional visual elements.
             - CAPTIONS: Should be professional, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures.
             - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and LinkedIn-specific professional tags.
             - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design).
@@ -294,6 +316,9 @@ def generate_facebook_post(company_data, theme, theme_description):
             - Location: {company_data['address']}
             - Target Audience: {company_data['target_group']}
             - Keywords: {company_data['keywords']}
+            - Tone_analysis = {company_data['tone_analysis']}
+            - Products = {company_data['products']}
+            - Product_categories = {company_data['product_categories']}
 
             THEME:
             - Title: {theme}
@@ -301,7 +326,7 @@ def generate_facebook_post(company_data, theme, theme_description):
 
             FACEBOOK-SPECIFIC REQUIREMENTS:
             - Community-focused, conversational, broader appeal
-            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images should NOT contain any text, logos, or watermarks. Focus on community-oriented visual elements.
+            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on community-oriented visual elements.
             - CAPTIONS: Should be conversational, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures.
             - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Facebook-specific community tags.
             - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design).

@@ -40,7 +40,7 @@ async def create_company(company: CompanyRequest):
 
         company_data = {
             "company_name": company.company_name,
-            "company_url": company.company_url or "",
+            "url": company.url or "",
             "company_info": company.company_info or "",
             "address": company.address or "",
             "favicon_url": company.favicon_url or "",
@@ -48,10 +48,14 @@ async def create_company(company: CompanyRequest):
             "industry": company.industry or "",
             "keywords": company.keywords or [],
             "logo_url": company.logo_url or "",
+            "products": company.products or [],
             "target_group": company.target_group or "",
             "theme_colors": company.theme_colors or [],
+            "tone_analysis": company.tone_analysis or "",
+            "product_categories": company.product_categories or {},
+            "matched_fonts": company.matched_fonts or {},
             "created_at": firestore.SERVER_TIMESTAMP,
-            "updated_at": firestore.SERVER_TIMESTAMP
+            "updated_at": firestore.SERVER_TIMESTAMP    
         }
         doc_ref = db.collection("companies").add(company_data)
         
