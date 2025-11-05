@@ -425,36 +425,3 @@ def generate_all_posts(company_data, theme, theme_description):
 
 
 
-
-
-# #### test
-# company_data  ={
-#      "industry": "Customer Relationship Management (CRM)",
-#     "company_info": "Funnelbud is a comprehensive CRM platform designed for business owners and sales managers seeking an all-in-one solution to enhance customer management, streamline communication, and drive sales growth. The platform allows users to manage customer relationships by consolidating emails, SMS, notes, tasks, quotes, and invoices in one place. It offers features such as campaign management to easily send targeted promotions and newsletters, as well as tools to discover new companies to engage with based on various criteria like industry and size. Users can create and e-sign quotes directly within the CRM, thereby improving efficiency and reducing administrative burdens. Funnelbud also emphasizes quick onboarding, allowing users to get started in under two hours, and offers 24/7 support through a chat feature. The platform integrates seamlessly with other systems like Fortnox, enhancing its utility for businesses. With a focus on user-friendly design and automation capabilities, Funnelbud stands out by providing a solution that not only helps manage customer relationships but also aids in driving sales and innovation. The company has been serving clients since 2015 and continues to evolve its offerings to meet customer needs.",
-#     "company_name": "Funnelbud",
-#     "keywords": [
-#       "Beständig Typ",
-#       "Maximal lagringstid",
-#       "Session Typ",
-#       "Lokal HTML-lagring",
-#       "website",
-#       "Collects data",
-#       "Session",
-#       "Typ",
-#       "Maximal",
-#       "Väntande Maximal",
-#       "dag Typ"
-#     ],
-#     "company_url": "",
-#     "target_group": "Small to medium-sized business owners, sales managers, and marketing teams looking for an integrated CRM solution to manage customer relationships, streamline sales processes, and enhance marketing efforts.",
-#     "address": "Jakobsbergsgatan 22, 111 44 Stockholm",
-
-#     }
-
-
-
-
-# theme = "Love Your Customers"
-# theme_description = "Celebrate Valentine's Day by sharing tips on nurturing customer relationships with Funnelbud's personalized CRM tools."
-# check=generate_post_planner(company_data, theme, theme_description)
-# print(check)
