@@ -5,8 +5,12 @@ from google.cloud import firestore
 from datetime import datetime, timezone
 from utils.logger import setup_logger
 
-
 from config.firebase_config import get_firestore_client
+
+
+from api.planner_routes import (generate_instagram_planner, 
+                                generate_facebook_planner, 
+                                generate_linkedin_planner)
 
 logger = setup_logger("marketing-app")
 
@@ -99,11 +103,6 @@ async def save_instagram_post_to_db(company_id: str, content: ContentSaveRequest
             "updated_at": datetime.now(timezone.utc)
         }
 
-        if content.scheduled_datetime and not content.is_future_schedule():
-            return {
-                "status": "error", 
-                "message": "scheduled_time must be in the future"
-            }
         # Set the document data
         doc_ref = db.collection('instagram_posts').document(company_id).collection('posts').add(final_data)
 
@@ -138,12 +137,7 @@ async def save_facebook_post_to_db(company_id: str, content: ContentSaveRequest)
             "updated_at": datetime.now(timezone.utc)
         }
 
-        if content.scheduled_datetime and not content.is_future_schedule():
-            return {
-                "status": "error", 
-                "message": "scheduled_time must be in the future"
-            }
-        
+    
         # Set the document data
         doc_ref = db.collection('facebook_posts').document(company_id).collection('posts').add(final_data)
 
@@ -177,13 +171,6 @@ async def save_linkedin_post_to_db(company_id: str, content: ContentSaveRequest)
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
-
-        if content.scheduled_datetime and not content.is_future_schedule():
-            return {
-                "status": "error", 
-                "message": "scheduled_time must be in the future"
-            }
-        
         # Set the document data
         doc_ref = db.collection('linkedin_posts').document(company_id).collection('posts').add(final_data)
 
@@ -207,7 +194,7 @@ async def save_linkedin_post_to_db(company_id: str, content: ContentSaveRequest)
 @router.get("/content/{company_id}/instagram/post/{post_id}")
 def get_instagram_post(company_id: str, post_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         post_ref = db.collection("instagram_posts").document(company_id).collection("posts").document(post_id)
         post_doc = post_ref.get()
 
@@ -230,7 +217,7 @@ def get_instagram_post(company_id: str, post_id: str):
 @router.get("/content/{company_id}/facebook/post/{post_id}")
 def get_facebook_post(company_id: str, post_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         post_ref = db.collection("facebook_posts").document(company_id).collection("posts").document(post_id)
         post_doc = post_ref.get()
 
@@ -254,7 +241,7 @@ def get_facebook_post(company_id: str, post_id: str):
 @router.get("/content/{company_id}/linkedin/post/{post_id}")
 def get_linkedin_post(company_id: str, post_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         post_ref = db.collection("linkedin_posts").document(company_id).collection("posts").document(post_id)
         post_doc = post_ref.get()
 
@@ -280,7 +267,7 @@ def get_linkedin_post(company_id: str, post_id: str):
 @router.get("/content/{company_id}/instagram/posts")
 def get_all_instagram_posts(company_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         posts_ref = db.collection("instagram_posts").document(company_id).collection("posts")
         
         posts = posts_ref.stream()
@@ -312,7 +299,7 @@ def get_all_instagram_posts(company_id: str):
 @router.get("/content/{company_id}/facebook/posts")
 def get_all_facebook_posts(company_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         posts_ref = db.collection("facebook_posts").document(company_id).collection("posts")
         
         posts = posts_ref.stream()
@@ -343,7 +330,7 @@ def get_all_facebook_posts(company_id: str):
 @router.get("/content/{company_id}/linkedin/posts")
 def get_all_linkedin_posts(company_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         posts_ref = db.collection("linkedin_posts").document(company_id).collection("posts")
         
         posts = posts_ref.stream()
@@ -488,6 +475,10 @@ def update_linkedin_post(company_id: str, post_id: str, content: ContentSaveRequ
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating post: {str(e)}")
 
-
-
 #########################################################################################################
+
+################################# generate and save posts to db (automation) ############################
+from services.scheduler_service import process_due_posts
+@router.post("/content/schedule/execute", tags=["Trigger Scheduler"])
+async def execute_scheduled_posts():
+      return await process_due_posts()

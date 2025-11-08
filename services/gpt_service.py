@@ -82,7 +82,7 @@ def generate_all_themes(company_data):
                 products = {products}
                 product_categories = {product_categories}
 
-                Determine the location from the provided address and identify its country.
+                Determine the location from the provided {address} and identify its country. Use the {address} to determine the regional language.
                 Generate all monthly themes strictly based on local seasonal patterns, festivals, and cultural observances in that country only.
                 Exclude holidays or events not celebrated or widely recognized in that region (e.g., exclude “Thanksgiving” or “Fourth of July” for European countries).
                 If a month does not have a major event, base the theme on seasonal lifestyle or weather trends relevant to that country.
@@ -154,14 +154,14 @@ def generate_theme(company_data, month, existing_themes=None):
 
             **Instructions**
             - Create two unique and relevant post themes for {month}.
+            -Other then the {existing_themes_context}.
             - Consider:
-            - Seasonal and weather factors.
-            - Local events or holidays based on the company's address.
+            - Seasonal and weather factors according to the Address.
+            - Local events or holidays based on the company's Address.
             - The company's industry and audience preferences.
             - Each theme must include a **title** and a **short description** (1-2 sentences).
             - Focus on creativity and relevance for the given month.
             - **CRITICAL: Generate themes that are DIFFERENT from any existing themes provided above.**
-
             **Return your answer strictly in the following JSON format:**
 
             {{

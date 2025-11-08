@@ -20,15 +20,21 @@ def schedule_post(company_id: str, schedular: SchedularRequest):
         if not company.exists:
             raise HTTPException(status_code=404, detail=f"  coudn't find the company")
         company_data = company.to_dict()
-
-        final_data = {
+        post_data = {
             "theme":schedular.theme,
             "theme_description": schedular.theme_description,
             "instagram_post_count": schedular.instagram_post_count,
             "facebook_post_count": schedular.facebook_post_count,
-            "linkedin_post_count": schedular.linkedin_post_count,
+            "linkedin_post_count": schedular.linkedin_post_count}
+
+        scheduled_datetime = datetime.fromisoformat(schedular.scheduled_date.replace('Z', '+00:00'))
+
+        final_data = {
+            "post_data" : post_data,
             "scheduled_date": schedular.scheduled_date,
+            "scheduled_at": scheduled_datetime,
             "status": "pending",
+            "company_id": company_id,
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP
         }
@@ -126,3 +132,82 @@ def get_all_scheduled_posts_for_month(company_id: str, month_id: str):
 
 
 
+############################################# debug route #########################################################
+# Add to content_routes.py or create a new debug route
+@router.get("/debug/scheduled-posts/{company_id}")
+def debug_scheduled_posts(company_id: str):
+    try:
+        db = get_firestore_client()
+        
+        # Check scheduled_posts collection
+        scheduled_ref = db.collection("scheduled_posts").document(company_id).collection("posts")
+        scheduled_docs = list(scheduled_ref.stream())
+        
+        scheduled_data = []
+        for doc in scheduled_docs:
+            data = doc.to_dict()
+            scheduled_data.append({
+                "id": doc.id,
+                "data": data
+            })
+        
+        return {
+            "scheduled_posts": scheduled_data,
+            "count": len(scheduled_data)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+
+
+@router.post("/content/schedule/test-execute/{company_id}/{post_id}")
+async def test_execute_scheduled_post(company_id: str, post_id: str):
+    """Test route to force execute a specific scheduled post"""
+    try:
+        db = get_firestore_client()
+        
+        # Get the specific post
+        post_ref = db.collection("scheduled_posts").document(company_id).collection("posts").document(post_id)
+        post_doc = post_ref.get()
+        
+        if not post_doc.exists:
+            raise HTTPException(status_code=404, detail="Post not found")
+        
+        data = post_doc.to_dict()
+        
+        logger.info(f"Force executing post {post_id} for company {company_id}")
+        
+        # Update status to processing
+        post_ref.update({
+            "status": "processing",
+            "updated_at": firestore.SERVER_TIMESTAMP,
+        })
+        
+        # Prepare data for content service
+        post_data_for_content = {
+            **data.get("post_data", {}),
+            "scheduled_time": data.get("scheduled_date"),
+            "company_id": company_id
+        }
+        
+        from services.content_service import generate_scheduled_posts
+        # Generate posts
+        response = await generate_scheduled_posts(company_id, post_data_for_content)
+        
+        # Update status to completed
+        post_ref.update({
+            "status": "completed",
+            "completed_at": firestore.SERVER_TIMESTAMP,
+            "generated_post_ids": response.get("post_ids", [])
+        })
+        
+        return {
+            "status": "success",
+            "message": f"Successfully executed post {post_id}",
+            "generated_posts": response
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in test execution: {str(e)}", exc_info=True)
+        raise HTTPException(status_code=500, detail=f"Test execution failed: {str(e)}")

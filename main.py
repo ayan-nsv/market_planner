@@ -74,18 +74,21 @@ app.add_middleware(
 )
 
 # Add profiler middleware
-app.add_middleware(
-    PyInstrumentProfilerMiddleware,
-    server_app=app,
-    profiler_output_type="speedscope",
-    prof_file_name="example_speedscope_profile.json"
-)
+# Enable profiler only when explicitly requested (to avoid memory/cpu overhead in production)
+if os.getenv("ENABLE_PROFILER", "false").lower() == "true":
+    app.add_middleware(
+        PyInstrumentProfilerMiddleware,
+        server_app=app,
+        profiler_output_type="speedscope",
+        prof_file_name="example_speedscope_profile.json"
+    )
 
 app.include_router(company_router, prefix="/api/v1", tags=["companies"])
 app.include_router(planner_router, prefix="/api/v1")
 app.include_router(content_router, prefix="/api/v1", tags=["content"])
 app.include_router(theme_router, prefix="/api/v1", tags=["themes"])
 app.include_router(request_router, prefix="/api/v1", tags=["requests"])
+
 app.include_router(schedular_router, prefix="/api/v1", tags=["schedular"])
 
 
