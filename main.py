@@ -1,5 +1,5 @@
 import os
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi_profiler import PyInstrumentProfilerMiddleware
 
@@ -8,7 +8,7 @@ from fastapi_profiler import PyInstrumentProfilerMiddleware
 import firebase_admin
 from dotenv import load_dotenv
 from contextlib import asynccontextmanager
-from firebase_admin import credentials, firestore, storage
+from firebase_admin import credentials
 
 from utils.logger import setup_logger
 from api.company_routes import router as company_router
@@ -16,7 +16,7 @@ from api.planner_routes import router as planner_router
 from api.content_routes import router as content_router
 from api.theme_routes import router as theme_router
 from api.request_routes import router as request_router
-from api.schedular_routes import router as schedular_router
+# from api.schedular_routes import router as schedular_router
 
 logger = setup_logger("marketing-app")
 
@@ -89,7 +89,7 @@ app.include_router(content_router, prefix="/api/v1", tags=["content"])
 app.include_router(theme_router, prefix="/api/v1", tags=["themes"])
 app.include_router(request_router, prefix="/api/v1", tags=["requests"])
 
-app.include_router(schedular_router, prefix="/api/v1", tags=["schedular"])
+# app.include_router(schedular_router, prefix="/api/v1", tags=["schedular"])
 
 
 

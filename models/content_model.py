@@ -1,5 +1,5 @@
 from typing import Optional, List
-from pydantic import BaseModel, validator
+from pydantic import BaseModel, field_validator
 from datetime import datetime, timezone
 
 class ContentRequest(BaseModel):
@@ -9,9 +9,10 @@ class ContentSaveRequest(BaseModel):
     image_url: Optional[str] = None
     caption: Optional[str] = None
     hashtags: Optional[List[str]] = None
+    status: Optional[str] = None
     scheduled_time: Optional[str] = None
 
-    @validator('scheduled_time')
+    @field_validator('scheduled_time')
     def validate_scheduled_time_format(cls, v):
         if v is not None:
             try:
