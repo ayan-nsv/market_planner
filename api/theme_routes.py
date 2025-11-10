@@ -132,28 +132,27 @@ def generate_all_themes_route(company_id: str):
 
 
 
-##### future updates #####
 
-# Update a specific theme document under a month
-# @router.put("/themes/{company_id}/{month_id}")
-# def update_theme(company_id: str, month_id: int, theme: ThemeRequest):
-#     try:
-#         doc_ref = db.collection("themes").document(company_id).collection("months").document(str(month_id))
-#         doc_ref.update(theme.model_dump())
-#         return {"status": "success", "message": f"Theme {month_id} updated successfully"}
+@router.get("/themes/{company_id}")
+def get_all_themes(company_id: str):
+    try:
+        months_ref = db.collection("themes").document(company_id).collection("months")
+        month_docs = months_ref.stream() 
 
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error updating theme: {str(e)}")
+        data = []
+        for doc in month_docs:
+            item = doc.to_dict()
+            item["month_id"] = doc.id 
+            data.append(item)
 
+        if not data:
+            raise HTTPException(status_code=404, detail="No themes found for this company")
 
+        return {
+            "status": "success",
+            "count": len(data),
+            "data": data
+        }
 
-# Delete a specific theme document under a month
-# @router.delete("/themes/{company_id}/{month_id}")
-# def delete_theme(company_id: str, month_id: int):
-#     try:
-#         doc_ref = db.collection("themes").document(company_id).collection("months").document(str(month_id))
-#         doc_ref.delete()
-#         return {"status": "success", "message": f"Theme {month_id} deleted successfully"}
-
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=f"Error deleting theme: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not get themes: {str(e)}")

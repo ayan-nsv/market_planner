@@ -3,7 +3,7 @@ from grpc import StatusCode
 from models.planner_model import PlannerRequest, PlannerUpdateRequest
 from google.cloud import firestore
 from config.firebase_config import get_firestore_client
-from services.gpt_service import generate_facebook_post, generate_linkedin_post, generate_all_posts, generate_instagram_post
+from services.gpt_service import generate_facebook_post, generate_linkedin_post, generate_instagram_post
 
 router = APIRouter()
 

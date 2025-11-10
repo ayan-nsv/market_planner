@@ -5,8 +5,12 @@ from google.cloud import firestore
 from datetime import datetime, timezone
 from utils.logger import setup_logger
 
-
 from config.firebase_config import get_firestore_client
+
+
+from api.planner_routes import (generate_instagram_planner, 
+                                generate_facebook_planner, 
+                                generate_linkedin_planner)
 
 logger = setup_logger("marketing-app")
 
@@ -95,20 +99,16 @@ async def save_instagram_post_to_db(company_id: str, content: ContentSaveRequest
             "hashtags": content.hashtags,
             "scheduled_time": content.scheduled_time,
             "scheduled_datetime": content.scheduled_datetime,
+            "status": "scheduled",
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
 
-        if content.scheduled_datetime and not content.is_future_schedule():
-            return {
-                "status": "error", 
-                "message": "scheduled_time must be in the future"
-            }
         # Set the document data
         doc_ref = db.collection('instagram_posts').document(company_id).collection('posts').add(final_data)
 
         return {
-            "status": "success",
+            "status": "scheduled",
             "company_id": company_id,
             "post_id": doc_ref[1].id,
             "scheduled_for": content.scheduled_time
@@ -134,21 +134,17 @@ async def save_facebook_post_to_db(company_id: str, content: ContentSaveRequest)
             "hashtags": content.hashtags,
             "scheduled_time": content.scheduled_time,
             "scheduled_datetime": content.scheduled_datetime,
+            "status": "scheduled",
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
 
-        if content.scheduled_datetime and not content.is_future_schedule():
-            return {
-                "status": "error", 
-                "message": "scheduled_time must be in the future"
-            }
-        
+    
         # Set the document data
         doc_ref = db.collection('facebook_posts').document(company_id).collection('posts').add(final_data)
 
         return {
-            "status": "success",
+            "status": "scheduled",
             "company_id": company_id,
             "post_id": doc_ref[1].id,
             "scheduled_for": content.scheduled_time
@@ -174,21 +170,15 @@ async def save_linkedin_post_to_db(company_id: str, content: ContentSaveRequest)
             "hashtags": content.hashtags,
             "scheduled_time": content.scheduled_time,
             "scheduled_datetime": content.scheduled_datetime,
+            "status": "scheduled",
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
-
-        if content.scheduled_datetime and not content.is_future_schedule():
-            return {
-                "status": "error", 
-                "message": "scheduled_time must be in the future"
-            }
-        
         # Set the document data
         doc_ref = db.collection('linkedin_posts').document(company_id).collection('posts').add(final_data)
 
         return {
-            "status": "success",
+            "status": "scheduled",
             "company_id": company_id,
             "post_id": doc_ref[1].id,
             "scheduled_for": content.scheduled_time
@@ -207,15 +197,16 @@ async def save_linkedin_post_to_db(company_id: str, content: ContentSaveRequest)
 @router.get("/content/{company_id}/instagram/post/{post_id}")
 def get_instagram_post(company_id: str, post_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         post_ref = db.collection("instagram_posts").document(company_id).collection("posts").document(post_id)
         post_doc = post_ref.get()
 
         if post_doc.exists:
             post_data = post_doc.to_dict()
             post_data["post_id"] = post_doc.id  
+            status = post_data["status"]
             return {
-                "status": "success",
+                "status": status,
                 "data": post_data
             }
         else:
@@ -230,15 +221,16 @@ def get_instagram_post(company_id: str, post_id: str):
 @router.get("/content/{company_id}/facebook/post/{post_id}")
 def get_facebook_post(company_id: str, post_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         post_ref = db.collection("facebook_posts").document(company_id).collection("posts").document(post_id)
         post_doc = post_ref.get()
 
         if post_doc.exists:
             post_data = post_doc.to_dict()
             post_data["post_id"] = post_doc.id  
+            status = post_data["status"]
             return {
-                "status": "success",
+                "status": status,
                 "data": post_data
             }
         else:
@@ -254,15 +246,16 @@ def get_facebook_post(company_id: str, post_id: str):
 @router.get("/content/{company_id}/linkedin/post/{post_id}")
 def get_linkedin_post(company_id: str, post_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         post_ref = db.collection("linkedin_posts").document(company_id).collection("posts").document(post_id)
         post_doc = post_ref.get()
 
         if post_doc.exists:
             post_data = post_doc.to_dict()
             post_data["post_id"] = post_doc.id  
+            status = post_data["status"]
             return {
-                "status": "success",
+                "status": status,
                 "data": post_data
             }
         else:
@@ -280,7 +273,7 @@ def get_linkedin_post(company_id: str, post_id: str):
 @router.get("/content/{company_id}/instagram/posts")
 def get_all_instagram_posts(company_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         posts_ref = db.collection("instagram_posts").document(company_id).collection("posts")
         
         posts = posts_ref.stream()
@@ -312,7 +305,7 @@ def get_all_instagram_posts(company_id: str):
 @router.get("/content/{company_id}/facebook/posts")
 def get_all_facebook_posts(company_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         posts_ref = db.collection("facebook_posts").document(company_id).collection("posts")
         
         posts = posts_ref.stream()
@@ -343,7 +336,7 @@ def get_all_facebook_posts(company_id: str):
 @router.get("/content/{company_id}/linkedin/posts")
 def get_all_linkedin_posts(company_id: str):
     try:
-        db = firestore.Client()
+        db = get_firestore_client()
         posts_ref = db.collection("linkedin_posts").document(company_id).collection("posts")
         
         posts = posts_ref.stream()
@@ -370,7 +363,7 @@ def get_all_linkedin_posts(company_id: str):
             "status": "error",
             "message": f"Failed to fetch posts: {str(e)}"
         }
-###################################################  ############################################################
+#####################################################  ############################################################
 
 
 
@@ -390,16 +383,19 @@ def update_instagram_post(company_id: str, post_id: str, content: ContentSaveReq
         # Prepare update data
         update_data = content.model_dump(exclude_unset=True)
         
-        for field in ['caption', 'hashtags', 'scheduled_time', 'image_url']:
+        for field in ['caption', 'hashtags', 'scheduled_time', 'image_url', 'status']:
             if field in update_data and update_data[field] is None:
                 update_data[field] = []
-        
+        if 'scheduled_time' in update_data:
+            update_data["scheduled_datetime"] = datetime.fromisoformat(update_data["scheduled_time"].replace('Z', '+00:00'))
+            update_data["status"] = "scheduled"
+
         update_data["updated_at"] = firestore.SERVER_TIMESTAMP
         
         if update_data:
             doc_ref.update(update_data)
             return {
-                "status": "success", 
+                "status": "scheduled", 
                 "message": f"Post {post_id} for Company {company_id} updated",
                 "updated_fields": list(update_data.keys())
             }
@@ -429,21 +425,24 @@ def update_facebook_post(company_id: str, post_id: str, content: ContentSaveRequ
         # Prepare update data
         update_data = content.model_dump(exclude_unset=True)
         
-        for field in ['caption', 'hashtags', 'scheduled_time', 'image_url']:
+        for field in ['caption', 'hashtags', 'scheduled_time', 'image_url', 'status']:
             if field in update_data and update_data[field] is None:
                 update_data[field] = []
+        if 'scheduled_time' in update_data:
+            update_data["scheduled_datetime"] = datetime.fromisoformat(update_data["scheduled_time"].replace('Z', '+00:00'))
+            update_data["status"] = "scheduled"
         
         update_data["updated_at"] = firestore.SERVER_TIMESTAMP
         
         if update_data:
             doc_ref.update(update_data)
             return {
-                "status": "success", 
+                "status": "scheduled", 
                 "message": f"Post {post_id} for Company {company_id} updated",
                 "updated_fields": list(update_data.keys())
             }
         else:
-            return {"status": "success", "message": "No fields to update"}
+            return {"status": "scheduled", "message": "No fields to update"}
             
     except HTTPException:
         raise
@@ -467,27 +466,42 @@ def update_linkedin_post(company_id: str, post_id: str, content: ContentSaveRequ
         # Prepare update data
         update_data = content.model_dump(exclude_unset=True)
         
-        for field in ['caption', 'hashtags', 'scheduled_time', 'image_url']:
+        for field in ['caption', 'hashtags', 'scheduled_time', 'image_url', 'status']:
             if field in update_data and update_data[field] is None:
                 update_data[field] = []
+        if 'scheduled_time' in update_data:
+            update_data["scheduled_datetime"] = datetime.fromisoformat(update_data["scheduled_time"].replace('Z', '+00:00'))
+            update_data["status"] = "scheduled"
         
         update_data["updated_at"] = firestore.SERVER_TIMESTAMP
         
         if update_data:
             doc_ref.update(update_data)
             return {
-                "status": "success", 
+                "status": "scheduled", 
                 "message": f"Post {post_id} for Company {company_id} updated",
                 "updated_fields": list(update_data.keys())
             }
         else:
-            return {"status": "success", "message": "No fields to update"}
+            return {"status": "scheduled", "message": "No fields to update"}
             
     except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error updating post: {str(e)}")
 
-
-
 #########################################################################################################
+
+################################# generate and save posts to db (automation) ############################
+from services.scheduler_service import process_due_posts
+@router.post("/content/schedule/execute", tags=["Trigger Scheduler"])
+async def execute_scheduled_posts():
+      return await process_due_posts()
+
+##############################################  new route to create scheduled posts #########################################################
+
+from models.schedular_model import SchedularRequest
+from services.content_service import generate_scheduled_posts
+@router.post("/content/{company_id}/schedule/create")
+async def create_scheduled_posts(company_id: str, scheduled_posts: SchedularRequest):
+    return await generate_scheduled_posts(company_id, scheduled_posts.model_dump())

@@ -3,6 +3,8 @@ import os
 from typing import Optional, Dict, Any
 from datetime import datetime, timezone
 from config.firebase_config import get_firebase_client
+import tempfile
+import os as _os
 
 from dotenv import load_dotenv
 
@@ -21,9 +23,25 @@ async def upload_image(image_bytes: bytes, path: str, content_type: str = "image
         
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(path)
-        
-        # Upload the file
-        blob.upload_from_string(image_bytes, content_type=content_type)
+
+        # Reduce peak memory by streaming from a temporary file with controlled chunk size
+        # 1MB chunks limit RAM spikes across concurrent requests
+        blob.chunk_size = 1 * 1024 * 1024
+
+        tmp_file = None
+        try:
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
+            tmp_file.write(image_bytes)
+            tmp_file.flush()
+            tmp_file.close()
+
+            blob.upload_from_filename(tmp_file.name, content_type=content_type)
+        finally:
+            if tmp_file is not None:
+                try:
+                    _os.unlink(tmp_file.name)
+                except Exception:
+                    pass
         
         encoded_path = path.replace('/', '%2F')
         public_url = f"https://firebasestorage.googleapis.com/v0/b/{bucket_name}/o/{encoded_path}?alt=media"
@@ -34,6 +52,9 @@ async def upload_image(image_bytes: bytes, path: str, content_type: str = "image
     except Exception as e:
         logger.error(f"Failed to upload image to {path}: {str(e)}")
         raise Exception(f"Upload failed: {str(e)}")
+
+
+
 
 
 async def save_url_to_db(content_id: str, image_url: str, channel: str, company_id: str, additional_data: Optional[Dict[str, Any]] = None):
@@ -62,66 +83,5 @@ async def save_url_to_db(content_id: str, image_url: str, channel: str, company_
 
 
 
-async def create_content_record(content_data: Dict[str, Any]) -> str:
-    try:
-        content_data.update({
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc)
-        })
-        
-        doc_ref = db.collection("images").add(content_data)
-        content_id = doc_ref[1].id
-        
-        logger.info(f"Content record created: {content_id}")
-        return content_id
-        
-    except Exception as e:
-        logger.error(f"Failed to create content record: {str(e)}")
-        raise Exception(f"Content creation failed: {str(e)}")
 
-async def get_document(collection: str, document_id: str) -> Optional[Dict[str, Any]]:
-    """
-    Get a document from Firestore
-    """
-    try:
-        doc_ref = db.collection(collection).document(document_id)
-        doc = doc_ref.get()
-        
-        if doc.exists:
-            data = doc.to_dict()
-            data["id"] = doc.id
-            return data
-        return None
-        
-    except Exception as e:
-        logger.error(f"Failed to get document {collection}/{document_id}: {str(e)}")
-        raise Exception(f"Document fetch failed: {str(e)}")
 
-async def update_document(collection: str, document_id: str, data: Dict[str, Any]):
-    """
-    Update a document in Firestore
-    """
-    try:
-        doc_ref = db.collection(collection).document(document_id)
-        data["updated_at"] = datetime.now(timezone.utc)
-        doc_ref.update(data)
-        
-        logger.info(f"Document updated: {collection}/{document_id}")
-        
-    except Exception as e:
-        logger.error(f"Failed to update document {collection}/{document_id}: {str(e)}")
-        raise Exception(f"Document update failed: {str(e)}")
-
-async def delete_document(collection: str, document_id: str):
-    """
-    Delete a document from Firestore
-    """
-    try:
-        doc_ref = db.collection(collection).document(document_id)
-        doc_ref.delete()
-        
-        logger.info(f"Document deleted: {collection}/{document_id}")
-        
-    except Exception as e:
-        logger.error(f"Failed to delete document {collection}/{document_id}: {str(e)}")
-        raise Exception(f"Document deletion failed: {str(e)}")

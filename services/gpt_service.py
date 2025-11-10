@@ -82,7 +82,7 @@ def generate_all_themes(company_data):
                 products = {products}
                 product_categories = {product_categories}
 
-                Determine the location from the provided address and identify its country.
+                Determine the location from the provided {address} and identify its country. Use the {address} to determine the regional language, and generate the themes in that language only.
                 Generate all monthly themes strictly based on local seasonal patterns, festivals, and cultural observances in that country only.
                 Exclude holidays or events not celebrated or widely recognized in that region (e.g., exclude “Thanksgiving” or “Fourth of July” for European countries).
                 If a month does not have a major event, base the theme on seasonal lifestyle or weather trends relevant to that country.
@@ -138,6 +138,7 @@ def generate_theme(company_data, month, existing_themes=None):
     
     prompt = f"""
             Generate two engaging social media post *themes* for the month of **{month}** for this company.
+            Determine the location from the provided {address} and identify its country. Use the {address} to determine the regional language, and generate the themes in that language only.
 
             **Company Details**
             - Address: {address}
@@ -154,14 +155,14 @@ def generate_theme(company_data, month, existing_themes=None):
 
             **Instructions**
             - Create two unique and relevant post themes for {month}.
+            -Other then the {existing_themes_context}.
             - Consider:
-            - Seasonal and weather factors.
-            - Local events or holidays based on the company's address.
+            - Seasonal and weather factors according to the Address.
+            - Local events or holidays based on the company's Address.
             - The company's industry and audience preferences.
             - Each theme must include a **title** and a **short description** (1-2 sentences).
             - Focus on creativity and relevance for the given month.
             - **CRITICAL: Generate themes that are DIFFERENT from any existing themes provided above.**
-
             **Return your answer strictly in the following JSON format:**
 
             {{
@@ -231,9 +232,9 @@ def generate_instagram_post(company_data, theme, theme_description):
             INSTAGRAM-SPECIFIC REQUIREMENTS:
             - Visual-focused, creative, engaging for younger audiences
             - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on visual elements only.
-            - CAPTIONS: Should be engaging, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures. should be of the native language of the company location: Write natural, conversational captions in the company's native language that match the brand personality. No emojis or special characters allowed.
-            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Instagram-specific tags, should be of the native language of the company location: Create a balanced set of hashtags in the native language, combining broad industry terms with specific content themes.
-            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design), should be of the native language of the company location: Write short, powerful phrases in native language that can be added as graphic elements during design.
+            - CAPTIONS: Should be engaging, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language: Write natural, conversational captions in the company's native language that match the brand personality. No emojis or special characters allowed.
+            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Instagram-specific tags, Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the hashtags in that language only.: Create a balanced set of hashtags in the native language, combining broad industry terms with specific content themes.
+            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design), Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language: Write short, powerful phrases in native language that can be added as graphic elements during design.
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
@@ -279,9 +280,9 @@ def generate_linkedin_post(company_data, theme, theme_description):
             LINKEDIN-SPECIFIC REQUIREMENTS:
             - Professional, business-oriented, industry insights
             - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on professional visual elements.
-            - CAPTIONS: Should be professional, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures.
-            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and LinkedIn-specific professional tags.
-            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design).
+            - CAPTIONS: Should be professional, platform-appropriate, and reflect the company's voice. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the caption in that language only.
+            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and LinkedIn-specific professional tags. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the hashtags in that language only.
+            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design). Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the overlay text in that language only.
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
@@ -327,9 +328,9 @@ def generate_facebook_post(company_data, theme, theme_description):
             FACEBOOK-SPECIFIC REQUIREMENTS:
             - Community-focused, conversational, broader appeal
             - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on community-oriented visual elements.
-            - CAPTIONS: Should be conversational, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures.
-            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Facebook-specific community tags.
-            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design).
+            - CAPTIONS: Should be conversational, platform-appropriate, and reflect the company's voice. May contain any emoji or figures. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the caption in that language only.
+            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Facebook-specific community tags. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the hashtags in that language only.
+            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design). Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the overlay text in that language only.
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
