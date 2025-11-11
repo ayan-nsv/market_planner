@@ -133,6 +133,27 @@ def delete_company(company_id: str):
         doc = doc_ref.get()
         if not doc.exists:
             raise HTTPException(status_code=404, detail=f"Company {company_id} not found")
+        
+        # delete all posts for the company
+        facebook_posts = db.collection("facebook_posts").document(company_id).collection("posts").get()
+        if facebook_posts:
+            for post in facebook_posts:
+                post.reference.delete()
+        linkedin_posts = db.collection("linkedin_posts").document(company_id).collection("posts").get()
+        if linkedin_posts:
+            for post in linkedin_posts:
+                post.reference.delete()
+        instagram_posts = db.collection("instagram_posts").document(company_id).collection("posts").get()
+        if instagram_posts:
+            for post in instagram_posts:
+                post.reference.delete()
+
+       #delete themes for the company
+        themes = db.collection("themes").document(company_id).collection("months").get()
+        if themes:
+            for month in themes:
+                month.reference.delete()
+
         doc_ref.delete()
         return {"status": "success", "message": f"Company {company_id} deleted"}
     except Exception as e:

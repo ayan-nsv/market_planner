@@ -500,8 +500,8 @@ async def execute_scheduled_posts():
 
 ##############################################  new route to create scheduled posts #########################################################
 
-from models.schedular_model import SchedularRequest
-from services.content_service import generate_scheduled_posts
-@router.post("/content/{company_id}/schedule/create")
-async def create_scheduled_posts(company_id: str, scheduled_posts: SchedularRequest):
-    return await generate_scheduled_posts(company_id, scheduled_posts.model_dump())
+# from models.schedular_model import SchedularRequest
+# from services.content_service import generate_scheduled_posts
+# @router.post("/content/{company_id}/schedule/create")
+# async def create_scheduled_posts(company_id: str, scheduled_posts: SchedularRequest):
+#     return await generate_scheduled_posts(company_id, scheduled_posts.model_dump())
