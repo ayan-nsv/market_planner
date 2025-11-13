@@ -4,6 +4,11 @@ from models.company_model import CompanyRequest
 from typing import List
 from config.firebase_config import get_firestore_client
 
+from api.theme_routes import  generate_all_themes_route
+from utils.logger import setup_logger
+
+logger = setup_logger("marketing-app")
+
 
 router = APIRouter()
 
@@ -90,36 +95,56 @@ def get_company(company_id: str):
         raise HTTPException(status_code=500, detail=f"Error fetching company: {str(e)}")
 
 
+
+
+############################################# update company ###########################################
+
 @router.put("/company/{company_id}")
 def update_company(company_id: str, company: CompanyRequest):
     try:
         db = get_firestore_client()
         doc_ref = db.collection("companies").document(company_id)
-        
-        if not doc_ref.get().exists:
+        doc = doc_ref.get()
+
+        if not doc.exists:
             raise HTTPException(status_code=404, detail=f"Company {company_id} not found")
-        
+
         update_data = company.model_dump(exclude_unset=True)
-        
-        for field in ['font_typography', 'keywords', 'theme_colors']:
+
+        # Convert None fields to empty arrays if applicable
+        list_fields = [
+            "font_typography", "keywords", "theme_colors",
+            "products", "product_categories", "tone_analysis",
+            "target_group", "industry"
+        ]
+        for field in list_fields:
             if field in update_data and update_data[field] is None:
-                update_data[field] = []
-        
+                update_data[field] = [] if isinstance(company.model_fields[field].annotation, list) else ""
+
         update_data["updated_at"] = firestore.SERVER_TIMESTAMP
-        
+
         if update_data:
             doc_ref.update(update_data)
+
+            # Run theme regeneration in background
+            response_content = generate_all_themes_route(company_id)
+            if response_content:
+                logger.info(f"[Background] Themes generated successfully for {company_id}")
+            else:
+                logger.warning(f"[Background] No response from theme generator for {company_id}")
+
             return {
-                "status": "success", 
-                "message": f"Company {company_id} updated",
+                "status": "success",
+                "message": f"Company {company_id} updated successfully.",
                 "updated_fields": list(update_data.keys())
             }
-        else:
-            return {"status": "success", "message": "No fields to update"}
-            
+
+        return {"status": "success", "message": "No fields to update"}
+
     except HTTPException:
         raise
     except Exception as e:
+        logger.exception(f"Error updating company {company_id}: {e}")
         raise HTTPException(status_code=500, detail=f"Error updating company: {str(e)}")
 
 

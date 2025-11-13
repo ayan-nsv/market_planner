@@ -18,6 +18,8 @@ class CompanyRequest(BaseModel):
     products: Optional[List[str]] = None
     matched_fonts: Optional[Dict[str, Any]] = None
     product_categories: Optional[Dict[str, Any]] = None
+
+    
     
     
 
