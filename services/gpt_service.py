@@ -205,14 +205,14 @@ def generate_theme(company_data, month, existing_themes=None):
 
 def generate_instagram_post(company_data, theme, theme_description):
     """
-    Generate Instagram-specific social media content
+    Generate Instagram-specific social media content with engaging, visual-focused captions
     """
     _validate_company_data(company_data)
     
-    system_message = """You are a marketing expert who generates detailed image prompts, captions, hashtags, and overlay text for Instagram. Create visual-focused, creative content that engages younger audiences and aligns with the company's brand."""
+    system_message = """You are a creative marketing expert who generates highly engaging, visual-focused content for Instagram. Create catchy, emoji-rich captions that grab attention while staying informative and authentic to the brand."""
     
     prompt = f"""
-            Generate Instagram-specific social media content.
+            Generate Instagram-specific social media content with HIGH ENGAGEMENT.
 
             COMPANY INFORMATION:
             - Company Name: {company_data['company_name']}
@@ -230,19 +230,23 @@ def generate_instagram_post(company_data, theme, theme_description):
             - Description: {theme_description}
 
             INSTAGRAM-SPECIFIC REQUIREMENTS:
-            - Visual-focused, creative, engaging for younger audiences
-            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on visual elements only.
-            - CAPTIONS: Should be engaging, platform-appropriate, and reflect the company's voice. Should not contain any emoji or figures. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language: Write natural, conversational captions in the company's native language that match the brand personality. No emojis or special characters allowed.
-            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Instagram-specific tags, Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the hashtags in that language only.: Create a balanced set of hashtags in the native language, combining broad industry terms with specific content themes.
-            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design), Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language: Write short, powerful phrases in native language that can be added as graphic elements during design.
+            - CAPTIONS: MUST BE CATCHY AND ENGAGING! Use 3-5 relevant emojis strategically. Include attention-grabbing hooks, questions, or surprising facts. Keep paragraphs short (1-2 sentences). Use line breaks for readability. Determine the location from {company_data['address']} and write in the regional language. Make it feel authentic and conversational.
+            - HASHTAGS: 5-8 relevant hashtags mixing industry, theme, and trending tags in the regional language.
+            - OVERLAY TEXT: Concise, impactful text for image overlays in native language.
+
+            CAPTION STRATEGY:
+            • Start with an attention-grabbing hook (question, surprising stat, or bold statement)
+            • Use emojis to highlight key points and add visual appeal
+            • Include a clear call-to-action
+            • Keep it informative but fun and engaging
+            • Use line breaks for easy reading
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
 
             {{
                 "channel": "Instagram",
-                "image_prompt": "Detailed visual description without text",
-                "caption": "Engaging Instagram caption",
+                "caption": "Catchy caption with emojis 📱✨\n\nEngaging content that tells a story...\n\nWhat do you think? 👇",
                 "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
                 "overlay_text": "Brief overlay text"
             }}
@@ -253,14 +257,14 @@ def generate_instagram_post(company_data, theme, theme_description):
 
 def generate_linkedin_post(company_data, theme, theme_description):
     """
-    Generate LinkedIn-specific social media content
+    Generate LinkedIn-specific social media content with professional yet engaging captions
     """
     _validate_company_data(company_data)
     
-    system_message = """You are a marketing expert who generates detailed image prompts, captions, hashtags, and overlay text for LinkedIn. Create professional, business-oriented content with industry insights that aligns with the company's brand."""
+    system_message = """You are a marketing expert who creates professional yet engaging LinkedIn content. Balance business insights with engaging elements like strategic emojis and compelling storytelling."""
     
     prompt = f"""
-            Generate LinkedIn-specific social media content.
+            Generate LinkedIn-specific social media content with PROFESSIONAL ENGAGEMENT.
 
             COMPANY INFORMATION:
             - Company Name: {company_data['company_name']}
@@ -278,21 +282,25 @@ def generate_linkedin_post(company_data, theme, theme_description):
             - Description: {theme_description}
 
             LINKEDIN-SPECIFIC REQUIREMENTS:
-            - Professional, business-oriented, industry insights
-            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on professional visual elements.
-            - CAPTIONS: Should be professional, platform-appropriate, and reflect the company's voice. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the caption in that language only.
-            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and LinkedIn-specific professional tags. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the hashtags in that language only.
-            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design). Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the overlay text in that language only.
+            - CAPTIONS: Professional but engaging. Use 2-4 strategic emojis to highlight key points. Start with compelling hooks. Include industry insights, data, or thought leadership. Use professional tone but make it conversational and engaging. Write in regional language based on {company_data['address']}.
+            - HASHTAGS: 5-8 professional hashtags in regional language.
+            - OVERLAY_TEXT: Professional overlay text in native language.
+
+            CAPTION STRATEGY:
+            • Start with a thought-provoking question or surprising industry insight
+            • Use emojis sparingly but strategically to emphasize key points
+            • Include valuable insights or data points
+            • Professional call-to-action
+            • Mix expertise with approachability
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
 
             {{
                 "channel": "LinkedIn",
-                "image_prompt": "Professional image description without text",
-                "caption": "Professional LinkedIn caption",
+                "caption": "Professional yet engaging caption with strategic emojis 💼📈\n\nValuable industry insights...\n\nWhat's your experience? 👇",
                 "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
-                "overlay_text": "Brief overlay text"
+                "overlay_text": "Professional overlay text"
             }}
             """
 
@@ -301,14 +309,14 @@ def generate_linkedin_post(company_data, theme, theme_description):
 
 def generate_facebook_post(company_data, theme, theme_description):
     """
-    Generate Facebook-specific social media content
+    Generate Facebook-specific social media content with highly engaging, community-focused captions
     """
     _validate_company_data(company_data)
     
-    system_message = """You are a marketing expert who generates detailed image prompts, captions, hashtags, and overlay text for Facebook. Create community-focused, conversational content with broader appeal that aligns with the company's brand."""
+    system_message = """You are a community-focused marketing expert who creates highly engaging, conversational Facebook content. Use emojis, questions, and community-building language to drive engagement."""
     
     prompt = f"""
-            Generate Facebook-specific social media content.
+            Generate Facebook-specific social media content with MAXIMUM ENGAGEMENT.
 
             COMPANY INFORMATION:
             - Company Name: {company_data['company_name']}
@@ -326,25 +334,31 @@ def generate_facebook_post(company_data, theme, theme_description):
             - Description: {theme_description}
 
             FACEBOOK-SPECIFIC REQUIREMENTS:
-            - Community-focused, conversational, broader appeal
-            - IMAGE PROMPTS: Must be detailed, specific for AI image generation. Generated images STRICTLY should NOT contain any overlay text, logos, or watermarks. Focus on community-oriented visual elements.
-            - CAPTIONS: Should be conversational, platform-appropriate, and reflect the company's voice. May contain any emoji or figures. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the caption in that language only.
-            - HASHTAGS: 5-8 relevant hashtags, mixing industry, theme, and Facebook-specific community tags. Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the hashtags in that language only.
-            - OVERLAY TEXT: Concise, impactful text for image overlays (added during post design). Determine the location from the provided {company_data['address']} and identify its country. Use the {company_data['address']} to determine the regional language, and generate the overlay text in that language only.
+            - CAPTIONS: Highly engaging and conversational! Use 4-6 emojis to create visual appeal. Ask questions to encourage comments. Use friendly, community-focused language. Share stories or relatable content. Write in regional language based on {company_data['address']}.
+            - HASHTAGS: 5-8 community-focused hashtags in regional language.
+            - OVERLAY_TEXT: Engaging overlay text in native language.
+
+            CAPTION STRATEGY:
+            • Start with an engaging hook or question
+            • Use multiple emojis to make the post visually appealing
+            • Encourage community interaction and sharing
+            • Tell a story or share relatable content
+            • Clear, friendly call-to-action
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
 
             {{
                 "channel": "Facebook",
-                "image_prompt": "Community-focused image description without text",
-                "caption": "Conversational Facebook caption",
+                "caption": "Super engaging caption with plenty of emojis! 🎉👀💬\n\nFun, community-focused content...\n\nWhat are your thoughts? Share below! 👇",
                 "hashtags": ["#tag1", "#tag2", "#tag3", "#tag4", "#tag5"],
-                "overlay_text": "Brief overlay text"
+                "overlay_text": "Engaging overlay text"
             }}
             """
 
     return _generate_single_post(system_message, prompt, "Facebook")
+
+
 
 
 def _validate_company_data(company_data):
@@ -382,7 +396,7 @@ def _generate_single_post(system_message, prompt, expected_channel):
         post = json.loads(content)
         
         # Validate the single post response
-        required_post_fields = ['channel', 'image_prompt', 'caption', 'hashtags', 'overlay_text']
+        required_post_fields = ['channel', 'caption', 'hashtags', 'overlay_text']
         for field in required_post_fields:
             if field not in post:
                 raise ValueError(f"Post missing required field: {field}")
@@ -392,11 +406,6 @@ def _generate_single_post(system_message, prompt, expected_channel):
         
         if not isinstance(post['hashtags'], list):
             raise ValueError("Hashtags should be an array")
-        
-        # Validate image prompt doesn't contain text elements
-        image_prompt_lower = post['image_prompt'].lower()
-        if any(text_indicator in image_prompt_lower for text_indicator in ['text:', 'words:', 'logo', 'watermark', 'lettering', 'typography']):
-            raise ValueError("Image prompt should not contain text elements")
         
         return post
         
@@ -424,5 +433,45 @@ def generate_all_posts(company_data, theme, theme_description):
     }
 
 
+
+#########################################  image prompt generation  #########################################
+
+async def generate_image_prompt(caption: str, hashtags: list[str], overlay_text: str):
+    system_message = """
+    You are a professional marketing visual director specializing in hyper-realistic photography for social media.
+    Respond strictly in JSON format with the following fields:
+    {
+        "image_prompt": "string",
+    }
+
+    Rules for `image_prompt`:
+    - Always describe a *photograph*, never an illustration or digital painting.
+    - Emphasize realism: natural lighting, authentic textures, lifelike people, real camera depth of field.
+    - Use photographic terms like: "shot on 35mm lens", "bokeh background", "shallow depth of field", "natural daylight", "soft shadows", "cinematic lighting".
+    - Avoid any reference to "AI-generated", "art", "digital art", "illustration", "render", or "CGI".
+    - Describe only what a real camera could capture — realistic settings, lighting, and materials.
+    - Style tone: editorial, lifestyle, product, or portrait photography depending on caption context.
+    - Channel must always be "image_prompt".
+    """
+
+    prompt = f"""
+    Create a realistic image prompt for a social media post using:
+    Caption: {caption}
+    Hashtags: {hashtags}
+    Overlay text: "{overlay_text}"
+
+    The image should look like a natural, high-quality photograph that fits the caption’s theme.
+    """
+
+    client = get_openai_client()
+    response = client.chat.completions.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "system", "content": system_message}, {"role": "user", "content": prompt}],
+        temperature=0.7,
+        response_format={"type": "json_object"}
+    )
+    content = response.choices[0].message.content.strip()
+    return json.loads(content)
+    
 
 
