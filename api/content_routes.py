@@ -1,6 +1,9 @@
 from fastapi import APIRouter, HTTPException
 from controllers.company_controller import create_company_image
 from models.content_model import ContentRequest,ContentSaveRequest
+from models.schedular_model import SchedularRequest
+
+
 from google.cloud import firestore
 from datetime import datetime, timezone
 from utils.logger import setup_logger
@@ -492,16 +495,14 @@ def update_linkedin_post(company_id: str, post_id: str, content: ContentSaveRequ
 
 #########################################################################################################
 
-################################# generate and save posts to db (automation) ############################
-from services.scheduler_service import process_due_posts
-@router.post("/content/schedule/execute", tags=["Trigger Scheduler"])
-async def execute_scheduled_posts():
-      return await process_due_posts()
 
-##############################################  new route to create scheduled posts #########################################################
-
-# from models.schedular_model import SchedularRequest
-# from services.content_service import generate_scheduled_posts
-# @router.post("/content/{company_id}/schedule/create")
-# async def create_scheduled_posts(company_id: str, scheduled_posts: SchedularRequest):
-#     return await generate_scheduled_posts(company_id, scheduled_posts.model_dump())
+@router.post("/content/{company_id}/schedule/create")
+async def create_scheduled_posts(company_id: str, schedular_request: SchedularRequest):
+    try:
+        from services.content_service import generate_scheduled_posts
+        response_content = await generate_scheduled_posts(company_id, schedular_request.model_dump())
+        return response_content
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error creating scheduled posts: {str(e)}")
