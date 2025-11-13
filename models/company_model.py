@@ -8,7 +8,7 @@ class CompanyRequest(BaseModel):
     company_info: Optional[str] = None
     address: Optional[str] = None
     favicon_url: Optional[str] = None
-    font_typography: Optional[List[str]] = None
+    fonts_typography: Optional[List[str]] = None
     industry: Optional[str] = None
     keywords: Optional[List[str]] = None
     logo_url: Optional[str] = None

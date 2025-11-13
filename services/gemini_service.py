@@ -34,7 +34,7 @@ async def generate_image(planner_info: Dict[str, Any]) -> Optional[Tuple[bytes, 
             The image should be captured with professional cinematic lighting and vibrant colors to make it stand out.
             The composition should be visually appealing and suitable for a marketing campaign.
             The image must have an aspect ratio of {aspect_ratio}.
-            `Do not include any text or word or anything else on the image.`
+            Do not include any text or word or anything else on the image.
             """
         if channel == 'instagram':
             pass

@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from google.cloud import firestore
 from models.company_model import CompanyRequest
-from typing import List
+
 from config.firebase_config import get_firestore_client
 
 from api.theme_routes import  generate_all_themes_route
@@ -49,7 +49,7 @@ async def create_company(company: CompanyRequest):
             "company_info": company.company_info or "",
             "address": company.address or "",
             "favicon_url": company.favicon_url or "",
-            "font_typography": company.font_typography or [],
+            "fonts_typography": company.fonts_typography or [],
             "industry": company.industry or "",
             "keywords": company.keywords or [],
             "logo_url": company.logo_url or "",
@@ -123,7 +123,7 @@ def update_company(company_id: str, company: CompanyRequest):
 
         # Convert None fields to empty arrays if applicable
         list_fields = [
-            "font_typography", "keywords", "theme_colors",
+            "fonts_typography", "keywords", "theme_colors",
             "products", "product_categories", "tone_analysis",
             "target_group", "industry", "composition_and_style",
             "environment_settings", "image_types_and_animation",
