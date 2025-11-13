@@ -57,8 +57,18 @@ async def create_company(company: CompanyRequest):
             "target_group": company.target_group or "",
             "theme_colors": company.theme_colors or [],
             "tone_analysis": company.tone_analysis or "",
-            "product_categories": company.product_categories or {},
             "matched_fonts": company.matched_fonts or {},
+            "product_categories": company.product_categories or {},
+
+            "composition_and_style": company.composition_and_style or "",
+            "environment_settings": company.environment_settings or "",
+            "image_types_and_animation": company.image_types_and_animation or "",
+            "keywords_for_ai_image_generation": company.keywords_for_ai_image_generation or "",
+            "lighting_and_color_tone": company.lighting_and_color_tone or "",
+            "subjects_and_people": company.subjects_and_people or "",
+            "technology_elements": company.technology_elements or "",
+            "theme_and_atmosphere": company.theme_and_atmosphere or "",
+
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP    
         }
@@ -115,7 +125,12 @@ def update_company(company_id: str, company: CompanyRequest):
         list_fields = [
             "font_typography", "keywords", "theme_colors",
             "products", "product_categories", "tone_analysis",
-            "target_group", "industry"
+            "target_group", "industry", "composition_and_style",
+            "environment_settings", "image_types_and_animation",
+            "keywords_for_ai_image_generation", "lighting_and_color_tone",
+            "subjects_and_people", "technology_elements", "theme_and_atmosphere",
+            "company_name", "url", "company_info", "address",
+            "favicon_url", "logo_url", "matched_fonts"
         ]
         for field in list_fields:
             if field in update_data and update_data[field] is None:

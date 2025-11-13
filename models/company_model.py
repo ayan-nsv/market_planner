@@ -19,7 +19,16 @@ class CompanyRequest(BaseModel):
     matched_fonts: Optional[Dict[str, Any]] = None
     product_categories: Optional[Dict[str, Any]] = None
 
-    
+    composition_and_style: Optional[str] = None
+    environment_settings: Optional[str] = None
+    image_types_and_animation: Optional[str] = None
+    keywords_for_ai_image_generation: Optional[str] = None
+    lighting_and_color_tone: Optional[str] = None
+    subjects_and_people: Optional[str] = None
+    technology_elements: Optional[str] = None
+    theme_and_atmosphere: Optional[str] = None
+
+
     
     
 
