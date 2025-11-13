@@ -6,7 +6,6 @@ from config.firebase_config import get_firestore_client
 
 from api.theme_routes import  generate_all_themes_route
 from utils.logger import setup_logger
-from fastapi import BackgroundTasks
 
 logger = setup_logger("marketing-app")
 
@@ -101,7 +100,7 @@ def get_company(company_id: str):
 ############################################# update company ###########################################
 
 @router.put("/company/{company_id}")
-def update_company(company_id: str, company: CompanyRequest, background_tasks: BackgroundTasks):
+def update_company(company_id: str, company: CompanyRequest):
     try:
         db = get_firestore_client()
         doc_ref = db.collection("companies").document(company_id)
