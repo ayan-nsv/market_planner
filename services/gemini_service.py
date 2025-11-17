@@ -29,13 +29,12 @@ async def generate_image(planner_info: Dict[str, Any]) -> Optional[Tuple[bytes, 
         aspect_ratio = ASPECT_RATIOS.get(channel, '1:1')
 
         enhanced_prompt = f"""
-            Generate a professional and engaging social media image for a {channel} post.
-            A high-quality, photorealistic image of: {image_prompt}.
-            The image should be captured with professional cinematic lighting and vibrant colors to make it stand out.
-            The composition should be visually appealing and suitable for a marketing campaign.
-            The image must have an aspect ratio of {aspect_ratio}.
-            Do not include any text or word or anything else on the image.
-            """
+        Generate a professional, high-quality, photorealistic image for a {channel} post.
+        Subject: {image_prompt}.
+        Use cinematic lighting, vibrant colors, and visually appealing composition suitable for a marketing campaign.
+        The image must have an aspect ratio of {aspect_ratio}.
+        Do not include any text, words, letters, logos, watermarks, or overlays — only visuals.
+        """
         if channel == 'instagram':
             pass
         elif channel == 'linkedin':
