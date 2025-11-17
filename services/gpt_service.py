@@ -359,8 +359,6 @@ def generate_facebook_post(company_data, theme, theme_description):
     return _generate_single_post(system_message, prompt, "Facebook")
 
 
-
-
 def _validate_company_data(company_data):
     """
     Validate company data structure
@@ -432,7 +430,60 @@ def generate_all_posts(company_data, theme, theme_description):
         ]
     }
 
+async def regenerate_caption(caption: str, hashtags: list[str], overlay_text: str):
+    try:
+        system_message = """
+        You are a professional social media marketing expert specializing in creating highly engaging, scroll-stopping captions that match visual content and brand tone.
+        Respond strictly in JSON format with the following fields:
+        {
+            "caption": "string"
+        }
+        """
 
+        prompt = f"""
+        Create a fresh, engaging, descriptive and visually appealing caption for a social media post.
+        
+        Requirements:
+        - Do NOT reuse or repeat the original caption wording.
+        - Do NOT include hashtags in the output.
+        - Consider the context provided by the previous caption, the hashtags, and the overlay text.
+        - The caption should feel dynamic, attention-grabbing, and suitable for modern social media platforms.
+        - The caption should be in the same length as the original caption.
+        - The caption should be descriptive and visually appealing.
+        - The caption should be in the same language as the original caption.
+        - The caption should be in the same tone as the original caption.
+        - The caption should be in the same style as the original caption and should be in the same format as the original caption.
+        - Include emojis and emoticons to make the caption more engaging and visually appealing.
+        - Include questions to encourage comments and engagement.
+        - Include call-to-action to encourage comments and engagement.
+        - Include stories or relatable content to encourage comments and engagement.
+        - Include data or insights to encourage comments and engagement.
+        - Include tips or advice to encourage comments and engagement.
+        - Include humor or sarcasm to encourage comments and engagement.
+        - Include emojis and emoticons to make the caption more engaging and visually appealing.
+
+
+        Original caption: {caption}
+        Previous hashtags: {hashtags}
+        Overlay text on the visual: {overlay_text}
+
+        Generate a new caption that aligns with the vibe implied by the hashtags and overlay text but remains unique and compelling.
+        """
+
+        client = get_openai_client()
+        response = client.chat.completions.create(
+            model="gpt-4o-mini",
+            messages=[{"role": "system", "content": system_message}, {"role": "user", "content": prompt}],
+            temperature=0.7,
+            response_format={"type": "json_object"}
+        )
+        content = response.choices[0].message.content.strip()
+        return json.loads(content)
+
+    except Exception as e:
+        raise ValueError(f"Error regenerating caption: {str(e)}")
+
+    
 
 #########################################  image prompt generation  #########################################
 
@@ -474,4 +525,6 @@ async def generate_image_prompt(caption: str, hashtags: list[str], overlay_text:
     return json.loads(content)
     
 
-
+# import asyncio
+# ans = asyncio.run(regenerate_caption("Vintern är här, och det är den perfekta tiden att förvandla kalla dagar till heta affärer! ❄️🔥 Låt oss guida dig i att stärka relationerna med dina kunder och boosta din försäljning, oavsett hur kallt det blir utomhus. 🌬️✨ Har du redan en plan för att nå ut till dina kunder i vinter? Dela dina tankar med oss! 💬 Och kom ihåg, med vår smarta CRM-lösning blir din vardag mindre stressig och mer lönsam. 🚀💼", ["#Vinterförsäljning", "#CRM", "#Kundhantering", "#Försäljning","#Jakobsbergsgatan","#Stockholm","#Affärshantering"], "Optimera din vinterförsäljning"))
+# print(ans)
