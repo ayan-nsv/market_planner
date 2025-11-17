@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException        
-from models.planner_model import PlannerRequest
+from models.planner_model import PlannerRequest, CaptionRegenerateRequest
 from config.firebase_config import get_firestore_client
-from services.gpt_service import generate_facebook_post, generate_linkedin_post, generate_instagram_post
+from services.gpt_service import generate_facebook_post, generate_linkedin_post, generate_instagram_post, regenerate_caption
 
 from services.gpt_service import generate_image_prompt
 
@@ -199,3 +199,26 @@ async def generate_instagram_planner(planner: PlannerRequest, company_id: str):
         logger.exception("Error generating Instagram planner for company %s", company_id)
         raise HTTPException(status_code= 500, detail=f"Error generating facebook planner: {str(e)}")
 
+
+######################################################### caption regenerate #########################################################
+
+@router.post(
+    "/planners/caption/regenerate",
+    tags=["Caption Regenerate"],
+    summary="Regenerate caption",
+    description="Regenerate caption for a social media post using the same image prompt, hashtags and overlay text",
+    response_description="Regenerated caption"
+)
+async def regenerate_caption_route(caption_regenerate: CaptionRegenerateRequest):
+    try:
+        generated_caption = await regenerate_caption(caption_regenerate.caption, caption_regenerate.hashtags, caption_regenerate.overlay_text)
+
+        if not generated_caption:
+            raise HTTPException(status_code=400, detail="Failed to regenerate caption")
+            
+        return {"caption": generated_caption.get("caption", "")}
+    except HTTPException as e:
+        raise
+    except Exception as e:
+        logger.exception("Error regenerating caption for planner")
+        raise HTTPException(status_code= 500, detail=f"Error regenerating caption: {str(e)}")

@@ -5,3 +5,7 @@ class PlannerRequest(BaseModel):
     theme_title: Optional[str] = None
     theme_description: Optional[str] = None
     
+class CaptionRegenerateRequest(BaseModel):
+    caption: str
+    hashtags: List[str]
+    overlay_text: str
