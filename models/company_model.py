@@ -27,6 +27,7 @@ class CompanyRequest(BaseModel):
     subjects_and_people: Optional[str] = None
     technology_elements: Optional[str] = None
     theme_and_atmosphere: Optional[str] = None
+    analyzed_images: Optional[List[str]] = None
 
 
     

@@ -46,8 +46,18 @@ async def generate_linkedin_planner(planner: PlannerRequest, company_id: str):
         hashtags = generated_planner_data.get("hashtags", [])
         overlay_text = generated_planner_data.get("overlay_text", "")
 
+        image_analysis = {
+                "composition_and_style": company_data.get("composition_and_style", ""),
+                "environment_settings": company_data.get("environment_settings", ""),
+                "image_types_and_animation": company_data.get("image_types_and_animation", ""),
+                "keywords_for_ai_image_generation": company_data.get("keywords_for_ai_image_generation", ""),
+                "lighting_and_color_tone": company_data.get("lighting_and_color_tone", ""),
+                "subjects_and_people": company_data.get("subjects_and_people", ""),
+                "technology_elements": company_data.get("technology_elements", ""),
+                "theme_and_atmosphere": company_data.get("theme_and_atmosphere", ""),
+            }
 
-        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text)
+        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis)
         image_prompt = generated_image_prompt.get("image_prompt", "")
 
         final_data = {
@@ -109,7 +119,18 @@ async def generate_facebook_planner(planner: PlannerRequest, company_id: str):
         hashtags = generated_planner_data.get("hashtags", [])
         overlay_text = generated_planner_data.get("overlay_text", "")
 
-        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text)
+        # image generation according to image analysis 
+        image_analysis = {
+                "composition_and_style": company_data.get("composition_and_style", ""),
+                "environment_settings": company_data.get("environment_settings", ""),
+                "image_types_and_animation": company_data.get("image_types_and_animation", ""),
+                "keywords_for_ai_image_generation": company_data.get("keywords_for_ai_image_generation", ""),
+                "lighting_and_color_tone": company_data.get("lighting_and_color_tone", ""),
+                "subjects_and_people": company_data.get("subjects_and_people", ""),
+                "technology_elements": company_data.get("technology_elements", ""),
+                "theme_and_atmosphere": company_data.get("theme_and_atmosphere", ""),
+            }
+        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis)
         image_prompt = generated_image_prompt.get("image_prompt", "")
 
         final_data = {
@@ -171,7 +192,19 @@ async def generate_instagram_planner(planner: PlannerRequest, company_id: str):
         hashtags = generated_planner_data.get("hashtags", [])
         overlay_text = generated_planner_data.get("overlay_text", "")
 
-        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text)
+        image_analysis = {
+                "composition_and_style": company_data.get("composition_and_style", ""),
+                "environment_settings": company_data.get("environment_settings", ""),
+                "image_types_and_animation": company_data.get("image_types_and_animation", ""),
+                "keywords_for_ai_image_generation": company_data.get("keywords_for_ai_image_generation", ""),
+                "lighting_and_color_tone": company_data.get("lighting_and_color_tone", ""),
+                "subjects_and_people": company_data.get("subjects_and_people", ""),
+                "technology_elements": company_data.get("technology_elements", ""),
+                "theme_and_atmosphere": company_data.get("theme_and_atmosphere", ""),
+            }
+
+
+        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis)
         image_prompt = generated_image_prompt.get("image_prompt", "")
         final_data = {
                 "channel": channel,

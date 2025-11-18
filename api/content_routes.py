@@ -103,6 +103,7 @@ async def save_instagram_post_to_db(company_id: str, content: ContentSaveRequest
             "scheduled_time": content.scheduled_time,
             "scheduled_datetime": content.scheduled_datetime,
             "status": "scheduled",
+            "overlay_text": content.overlay_text,
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
@@ -138,6 +139,7 @@ async def save_facebook_post_to_db(company_id: str, content: ContentSaveRequest)
             "scheduled_time": content.scheduled_time,
             "scheduled_datetime": content.scheduled_datetime,
             "status": "scheduled",
+            "overlay_text": content.overlay_text,
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
@@ -174,6 +176,7 @@ async def save_linkedin_post_to_db(company_id: str, content: ContentSaveRequest)
             "scheduled_time": content.scheduled_time,
             "scheduled_datetime": content.scheduled_datetime,
             "status": "scheduled",
+            "overlay_text": content.overlay_text,
             "created_at": datetime.now(timezone.utc),
             "updated_at": datetime.now(timezone.utc)
         }
