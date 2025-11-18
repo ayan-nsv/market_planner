@@ -5,13 +5,16 @@ from google.cloud import firestore
 from config.firebase_config import get_firestore_client
 from utils.logger import setup_logger
 
+from fastapi import Depends
 
 logger = setup_logger("marketing-app")
 router = APIRouter()
-db = get_firestore_client()
+
+async def get_db():
+    return get_firestore_client()
 
 @router.post("/request/{sernder_id}/{target_id}")
-def generate_request(target_id: str, sender_id: str):
+def generate_request(target_id: str, sender_id: str, db: firestore.Client = Depends(get_db)):
     try:
         reciever_ref = db.collection("users").document(target_id)
         reciever = reciever_ref.get()
@@ -46,7 +49,7 @@ def generate_request(target_id: str, sender_id: str):
 
 
 @router.put("/request/{request_id}")
-def update_request(request_id: str, request: RequestModel):
+def update_request(request_id: str, request: RequestModel, db: firestore.Client = Depends(get_db)):
     try:
         request_ref= db.collection("requests").document(request.target_id).collection("list").document(request_id)
         request_snapshot = request_ref.get()
