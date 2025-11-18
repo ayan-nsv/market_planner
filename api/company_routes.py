@@ -2,32 +2,40 @@ from fastapi import APIRouter, HTTPException
 from google.cloud import firestore
 from models.company_model import CompanyRequest
 
+from fastapi import Depends
 from config.firebase_config import get_firestore_client
 
 from api.theme_routes import  generate_all_themes_route
 from utils.logger import setup_logger
 
+
 logger = setup_logger("marketing-app")
+
+async def get_db():
+    return get_firestore_client()
 
 
 router = APIRouter()
 
 @router.get("/company")
-def get_companies():
+def get_companies(db: firestore.Client = Depends(get_db), page: int = 1, limit: int = 5):
     try:
-        db = get_firestore_client()
         companies_ref = db.collection("companies")
-        docs = companies_ref.stream()
+        docs = companies_ref.limit(limit).offset((page-1)*limit).stream()
         companies = [{**doc.to_dict(), "id": doc.id} for doc in docs]
-        return companies
+        return {
+            "data": companies,
+            "page": page,
+            "limit": limit
+        }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error fetching companies: {str(e)}")
 
 
+
 @router.post("/company")
-async def create_company(company: CompanyRequest):
+async def create_company(company: CompanyRequest, db: firestore.Client = Depends(get_db)):
     try:
-        db = get_firestore_client()
         
         if not company.company_name or not company.company_name.strip():
             raise HTTPException(status_code=400, detail="Company name is required")
@@ -90,9 +98,8 @@ async def create_company(company: CompanyRequest):
 
 
 @router.get("/company/{company_id}")
-def get_company(company_id: str):
+def get_company(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
-        db = get_firestore_client()
         doc_ref = db.collection("companies").document(company_id)
         doc = doc_ref.get()
         if not doc.exists:
@@ -111,9 +118,9 @@ def get_company(company_id: str):
 ############################################# update company ###########################################
 
 @router.put("/company/{company_id}")
-def update_company(company_id: str, company: CompanyRequest):
+def update_company(company_id: str, company: CompanyRequest, db: firestore.Client = Depends(get_db)):
     try:
-        db = get_firestore_client()
+
         doc_ref = db.collection("companies").document(company_id)
         doc = doc_ref.get()
 
@@ -143,7 +150,7 @@ def update_company(company_id: str, company: CompanyRequest):
             doc_ref.update(update_data)
 
             # Run theme regeneration in background
-            response_content = generate_all_themes_route(company_id)
+            response_content =  generate_all_themes_route(company_id)
             if response_content:
                 logger.info(f"[Background] Themes generated successfully for {company_id}")
             else:
@@ -167,9 +174,8 @@ def update_company(company_id: str, company: CompanyRequest):
 
 
 @router.delete("/company/{company_id}")
-def delete_company(company_id: str):
+def delete_company(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
-        db = get_firestore_client()
         doc_ref = db.collection("companies").document(company_id)
         doc = doc_ref.get()
         if not doc.exists:

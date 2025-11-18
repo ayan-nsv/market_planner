@@ -1,11 +1,17 @@
 from fastapi import APIRouter, HTTPException
 from models.theme_model import ThemeRequest
-from google.cloud import firestore
 from services.gpt_service import generate_all_themes, generate_theme
+
+from google.cloud import firestore
+from fastapi import Depends
+from config.firebase_config import get_firestore_client
+
 import json
 
 router = APIRouter()
-db = firestore.Client()
+
+async def get_db():
+    return get_firestore_client()
 
 
 def parse_themes_response(response_content: str):
@@ -39,7 +45,7 @@ def ensure_all_months(themes):
 
 # Get a single theme from a month
 @router.get("/themes/{company_id}/{month_id}")
-def get_theme(company_id: str, month_id: int):
+def get_theme(company_id: str, month_id: int, db: firestore.Client = Depends(get_db)):
     try:
         doc_ref = db.collection("themes").document(company_id).collection("months").document(str(month_id))
         doc = doc_ref.get()
@@ -51,7 +57,7 @@ def get_theme(company_id: str, month_id: int):
 
 
 @router.post("/themes/{company_id}/{month_id}/regenerate")
-def regenerate_month_theme(company_id: str, month_id: int):
+def regenerate_month_theme(company_id: str, month_id: int, db: firestore.Client = Depends(get_db)):
     try:
         # Validate month_id
         if month_id < 1 or month_id > 12:
@@ -99,7 +105,7 @@ def regenerate_month_theme(company_id: str, month_id: int):
 
 # Generate all themes for a company
 @router.post("/themes/{company_id}/generate-all")
-def generate_all_themes_route(company_id: str):
+def generate_all_themes_route(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
         company_ref = db.collection("companies").document(company_id)
         company_doc = company_ref.get()
@@ -134,7 +140,7 @@ def generate_all_themes_route(company_id: str):
 
 
 @router.get("/themes/{company_id}")
-def get_all_themes(company_id: str):
+def get_all_themes(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
         months_ref = db.collection("themes").document(company_id).collection("months")
         month_docs = months_ref.stream() 

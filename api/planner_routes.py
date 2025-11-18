@@ -1,7 +1,10 @@
 from fastapi import APIRouter, HTTPException        
 from models.planner_model import PlannerRequest, CaptionRegenerateRequest
-from config.firebase_config import get_firestore_client
 from services.gpt_service import generate_facebook_post, generate_linkedin_post, generate_instagram_post, regenerate_caption
+
+from fastapi import Depends
+from google.cloud import firestore
+from config.firebase_config import get_firestore_client
 
 from services.gpt_service import generate_image_prompt
 
@@ -10,6 +13,9 @@ from utils.logger import setup_logger
 router = APIRouter()
 
 logger = setup_logger("marketing-app")
+
+async def get_db():
+    return get_firestore_client()
 
 
 ######## create linkedin planner
@@ -20,14 +26,13 @@ logger = setup_logger("marketing-app")
     description="Generate a social media planner specifically for LinkedIn platform",
     response_description="Generated LinkedIn planner details"
 )
-async def generate_linkedin_planner(planner: PlannerRequest, company_id: str):
+async def generate_linkedin_planner(planner: PlannerRequest, company_id: str, db: firestore.Client = Depends(get_db)):
     try:
         logger.info(
             "Generating LinkedIn planner for company %s with theme '%s'",
             company_id,
             planner.theme_title,
         )
-        db = get_firestore_client()
         company_ref = db.collection("companies").document(company_id)
         company_doc = company_ref.get()
         if not company_doc.exists:
@@ -94,14 +99,13 @@ async def generate_linkedin_planner(planner: PlannerRequest, company_id: str):
     description="Generate a social media planner specifically for Facebook platform",
     response_description="Generated Facebook planner details"
 )
-async def generate_facebook_planner(planner: PlannerRequest, company_id: str):
+async def generate_facebook_planner(planner: PlannerRequest, company_id: str, db: firestore.Client = Depends(get_db)):
     try:
         logger.info(
             "Generating Facebook planner for company %s with theme '%s'",
             company_id,
             planner.theme_title,
         )
-        db = get_firestore_client()
         company_ref = db.collection("companies").document(company_id)
         company_doc = company_ref.get()
         if not company_doc.exists:
@@ -167,14 +171,13 @@ async def generate_facebook_planner(planner: PlannerRequest, company_id: str):
     description="Generate a social media planner specifically for Instagram platform",
     response_description="Generated Instagram planner details"
 )
-async def generate_instagram_planner(planner: PlannerRequest, company_id: str):
+async def generate_instagram_planner(planner: PlannerRequest, company_id: str, db: firestore.Client = Depends(get_db)):
     try:
         logger.info(
             "Generating Instagram planner for company %s with theme '%s'",
             company_id,
             planner.theme_title,
         )
-        db = get_firestore_client()
         company_ref = db.collection("companies").document(company_id)
         company_doc = company_ref.get()
         if not company_doc.exists:
