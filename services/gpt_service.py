@@ -487,44 +487,116 @@ async def regenerate_caption(caption: str, hashtags: list[str], overlay_text: st
 
 #########################################  image prompt generation  #########################################
 
-async def generate_image_prompt(caption: str, hashtags: list[str], overlay_text: str):
+
+
+def normalize_field(value):
+    if isinstance(value, set):
+        return ", ".join(value)
+    if value is None:
+        return ""
+    return str(value)
+
+
+async def generate_image_prompt(caption: str, hashtags: list[str], overlay_text: str, image_analysis: dict):
     system_message = """
     You are a professional marketing visual director specializing in hyper-realistic photography for social media.
+    Your top priority is to match the company's established visual identity based on the provided `image_analysis`.
+
     Respond strictly in JSON format with the following fields:
     {
-        "image_prompt": "string",
+        "image_prompt": "string"
     }
 
-    Rules for `image_prompt`:
-    - Always describe a *photograph*, never an illustration or digital painting.
-    - Emphasize realism: natural lighting, authentic textures, lifelike people, real camera depth of field.
-    - Use photographic terms like: "shot on 35mm lens", "bokeh background", "shallow depth of field", "natural daylight", "soft shadows", "cinematic lighting".
-    - Avoid any reference to "AI-generated", "art", "digital art", "illustration", "render", or "CGI".
-    - Describe only what a real camera could capture — realistic settings, lighting, and materials.
-    - Style tone: editorial, lifestyle, product, or portrait photography depending on caption context.
-    - Channel must always be "image_prompt".
+    CRITICAL RULES:
+    - The company's `image_analysis` DICT TAKES PRIORITY over caption and hashtags.
+    - The final prompt MUST fully align with:
+        • composition and style
+        • environment settings
+        • image types
+        • lighting and color tone
+        • subjects and people
+        • technology elements
+        • theme and atmosphere
+    - Do NOT introduce anything outside the company's style.
+
+    PHOTOGRAPHY RULES:
+    - Always describe a *photograph*, never illustrations, digital art, CGI, or rendering.
+    - Emphasize realism: natural lighting, lifelike textures, real human appearance, natural camera depth of field.
+    - Use true photography terminology:
+      “shot on 35mm lens”, “bokeh background”, “cinematic lighting”, “soft shadows”, “natural daylight”.
+    - Only describe things a real camera could capture.
+    - NEVER mention AI, generative tools, or digital art styles.
     """
 
     prompt = f"""
-    Create a realistic image prompt for a social media post using:
+    Generate a realistic photography prompt for a social media post.
+
+    Inputs:
     Caption: {caption}
     Hashtags: {hashtags}
     Overlay text: "{overlay_text}"
 
-    The image should look like a natural, high-quality photograph that fits the caption’s theme.
+    STRICT COMPANY IMAGE ANALYSIS PROFILE (FOLLOW THESE EXACTLY):
+
+    - Composition and style: {normalize_field(image_analysis.get("composition_and_style"))}
+    - Environment settings: {normalize_field(image_analysis.get("environment_settings"))}
+    - Image types and animation: {normalize_field(image_analysis.get("image_types_and_animation"))}
+    - Keywords for AI image generation: {normalize_field(image_analysis.get("keywords_for_ai_image_generation"))}
+    - Lighting and color tone: {normalize_field(image_analysis.get("lighting_and_color_tone"))}
+    - Subjects and people: {normalize_field(image_analysis.get("subjects_and_people"))}
+    - Technology elements: {normalize_field(image_analysis.get("technology_elements"))}
+    - Theme and atmosphere: {normalize_field(image_analysis.get("theme_and_atmosphere"))}
+
+
+    REQUIREMENTS:
+    - The above image_analysis is the PRIMARY style definition.
+    - The caption may influence the concept, but the final output MUST remain aligned with the brand identity.
+    - Make the prompt feel like a natural, high-quality photograph belonging to the company's existing image library.
+
+    Return ONLY valid JSON.
     """
 
     client = get_openai_client()
     response = client.chat.completions.create(
         model="gpt-4o-mini",
-        messages=[{"role": "system", "content": system_message}, {"role": "user", "content": prompt}],
+        messages=[
+            {"role": "system", "content": system_message},
+            {"role": "user", "content": prompt}
+        ],
         temperature=0.7,
         response_format={"type": "json_object"}
     )
+
     content = response.choices[0].message.content.strip()
     return json.loads(content)
-    
+
 
 # import asyncio
-# ans = asyncio.run(regenerate_caption("Vintern är här, och det är den perfekta tiden att förvandla kalla dagar till heta affärer! ❄️🔥 Låt oss guida dig i att stärka relationerna med dina kunder och boosta din försäljning, oavsett hur kallt det blir utomhus. 🌬️✨ Har du redan en plan för att nå ut till dina kunder i vinter? Dela dina tankar med oss! 💬 Och kom ihåg, med vår smarta CRM-lösning blir din vardag mindre stressig och mer lönsam. 🚀💼", ["#Vinterförsäljning", "#CRM", "#Kundhantering", "#Försäljning","#Jakobsbergsgatan","#Stockholm","#Affärshantering"], "Optimera din vinterförsäljning"))
+# ans = asyncio.run(generate_image_prompt(
+
+#     "Vintern är här, och det är den perfekta tiden att förvandla kalla dagar till heta affärer! ❄️🔥 Låt oss guida dig i att stärka relationerna med dina kunder och boosta din försäljning, oavsett hur kallt det blir utomhus. 🌬️✨ Har du redan en plan för att nå ut till dina kunder i vinter? Dela dina tankar med oss! 💬 Och kom ihåg, med vår smarta CRM-lösning blir din vardag mindre stressig och mer lönsam. 🚀💼", 
+    
+#     ["#Vinterförsäljning", "#CRM", "#Kundhantering", "#Försäljning","#Jakobsbergsgatan","#Stockholm","#Affärshantering"], 
+    
+#     "Optimera din vinterförsäljning",
+    
+#     {
+#         "composition_and_style": "**Camera Angles**: Various angles are used, including straightforward product shots and slightly elevated perspectives. **Reflections and Depth**: Some images may utilize reflections or depth to draw attention to the products. **Human Interaction**: There is no human interaction present; the focus is solely on the products. **Balance**: Each image maintains a balanced composition, highlighting the products without clutter.",
+
+#         "environment_settings": "**Type of Space**: The images represent a tech-centric environment, likely a modern retail space or online catalog for electronic gadgets. **Interior Design Details**: Predominantly minimalistic design with a focus on product visibility. The background is often plain or lightly textured to emphasize the products. **Lighting Fixtures**: Soft, even lighting is used to highlight the products without harsh shadows. **Decor Elements**: The styling is minimal with no excessive decor, allowing the products to remain the focal point. **Overall Mood**: The mood is contemporary and aligns with other tech retail spaces that emphasize clarity and function.",
+
+#         "image_types_and_animation": "**Image Types**: All images are static photos; no animated images, GIFs, or motion graphics are present. **Movement/Animation**: There are no dynamic elements or apparent movement within any of the images. **Format Usage**: The collection primarily consists of static images showcasing various tech products.",
+
+#         "keywords_for_ai_image_generation": "static photography, modern technology, sleek design, electronic gadgets, minimalistic, tech products, clean lines, neutral color palette, polished surfaces, soft lighting, product focus, minimal decor, innovative design, convenience, sophisticated atmosphere, consumer electronics, digital displays, modern retail, tech-savvy, aesthetic appeal",
+
+#         "lighting_and_color_tone": "**Quality of Lighting**: The lighting is soft and natural, enhancing the product's visual appeal without overpowering colors. **Light Sources**: Primarily soft artificial lighting, possibly with some natural light effects in the background. **Color Palette**: The images utilize neutral tones like black, white, and grey, with some accent colors (e.g., blue, green) on certain products. **Surface Qualities**: Surfaces appear polished and smooth, contributing to the modern aesthetic.",
+        
+#         "subjects_and_people": "**Demographics**: No people are present in the images; they focus solely on the products. **Emotions**: As there are no individuals, no facial expressions or emotions are displayed. **Attire**: Not applicable due to the absence of people. **Activities**: The images capture the products in a straightforward manner, showcasing their design and features.",
+        
+#         "technology_elements": "**Visible Tech Equipment**: All images feature various tech products, including speakers, headphones, chargers, and smart devices. **Screens and Displays**: Some products include digital displays (e.g., charging indicators). **Technology Integration**: The products are presented in a way that emphasizes modern technology's role in daily life. **Modern vs. Traditional**: The images lean heavily towards modern elements, showcasing sleek designs and advanced features.",
+
+#         "theme_and_atmosphere": "**Overall Theme**: The images convey a modern and sleek atmosphere centered around technology and innovation. **Evoked Feelings**: The space should evoke a sense of sophistication, convenience, and modernity, appealing to tech-savvy consumers. **Emotional Tone**: The tone is clean and inviting, focusing on functionality and aesthetic appeal."
+#     }))
+
+
 # print(ans)

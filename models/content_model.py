@@ -11,6 +11,7 @@ class ContentSaveRequest(BaseModel):
     hashtags: Optional[List[str]] = None
     status: Optional[str] = None
     scheduled_time: Optional[str] = None
+    overlay_text: Optional[str] = None
 
     @field_validator('scheduled_time')
     def validate_scheduled_time_format(cls, v):

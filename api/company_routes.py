@@ -68,6 +68,7 @@ async def create_company(company: CompanyRequest):
             "subjects_and_people": company.subjects_and_people or "",
             "technology_elements": company.technology_elements or "",
             "theme_and_atmosphere": company.theme_and_atmosphere or "",
+            "analyzed_images": company.analyzed_images or [],
 
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP    
