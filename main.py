@@ -15,7 +15,7 @@ from api.company_routes import router as company_router
 from api.planner_routes import router as planner_router
 from api.content_routes import router as content_router
 from api.theme_routes import router as theme_router
-from api.channel_routes import router as channel_router
+from api.request_routes import router as request_router
 
 
 logger = setup_logger("marketing-app")
@@ -87,7 +87,7 @@ app.include_router(company_router, prefix="/api/v1", tags=["companies"])
 app.include_router(planner_router, prefix="/api/v1")
 app.include_router(content_router, prefix="/api/v1", tags=["content"])
 app.include_router(theme_router, prefix="/api/v1", tags=["themes"])
-app.include_router(channel_router, prefix="/api/v1", tags=["channels"])
+app.include_router(request_router, prefix="/api/v1", tags=["requests"])
 
 
 

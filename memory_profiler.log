@@ -1,0 +1,15 @@
+Filename: /Users/Rimcy1/Desktop/Marketing task/api/content_routes.py
+
+Line #    Mem usage    Increment  Occurrences   Line Contents
+=============================================================
+    43 114.3281 MiB 114.3281 MiB           1   @router.get("/test-memory")
+    44                                         @profile(stream=memory_log, precision=4)
+    45                                         def test_memory_profiler():
+    46 114.3594 MiB   0.0312 MiB           1       logger.info("Test route to see if memory_profiler works")
+    47                                             # Create some memory usage
+    48 114.3594 MiB   0.0000 MiB           1       data = []
+    49 131.5156 MiB -157.6094 MiB      100001       for i in range(100000):
+    50 131.5156 MiB -140.3438 MiB      100000           data.append(f"string_{i}" * 10)
+    51 131.5156 MiB   0.0000 MiB           1       return {"message": "Memory test completed", "items": len(data)}
+
+
