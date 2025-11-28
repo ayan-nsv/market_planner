@@ -12,8 +12,6 @@ class ContentSaveRequest(BaseModel):
     status: Optional[str] = None
     scheduled_time: Optional[str] = None
     overlay_text: Optional[str] = None
-    month_id: Optional[int] = None
-    theme_index: Optional[int] = None
 
     @field_validator('scheduled_time')
     def validate_scheduled_time_format(cls, v):
@@ -50,12 +48,3 @@ class ContentSaveRequest(BaseModel):
             
             return scheduled_dt > now
         return False
-
-class ReframeImageRequest(BaseModel):
-    company_id: str
-    post_id: str
-    channel: str
-    target_ratio: int # 1:1 (Square)default  3:2 (Landscape)  2:3 (Portrait / Vertical)
-
-
-

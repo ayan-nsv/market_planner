@@ -3,7 +3,6 @@ import os
 import json
 from dotenv import load_dotenv
 
-
 load_dotenv()
 
 
@@ -16,40 +15,9 @@ def get_openai_client():
         _openai_client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
     return _openai_client
 
-async def figure_out_language(address: str):
-    system_prompt = """figure out the native language of the address"""
-    prompt = f"""
-            Determine the native language of this address: "{address}".
-            Return the result strictly in JSON format as:
-            {{
-            "language": "language_name"
-            }}
-            If the language cannot be detected or the address is invalid, return:
-            {{
-            "language": "english"
-            }}
-            """
-    client = get_openai_client()
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[{"role": "system", "content": system_prompt}, {"role": "user", "content": prompt}],
-        response_format={"type": "json_object"}
-    )
-    content = response.choices[0].message.content.strip()
-    try:
-        language = json.loads(content)
-    except json.JSONDecodeError:
-        raise ValueError(f"Model did not return valid JSON: {content[:200]}")
-    return language["language"]
 
-
-async def generate_all_themes(company_data):
-
+def generate_all_themes(company_data):
     address = company_data['address']
-    if address is not None:
-        language = await figure_out_language(address)
-        
-
     company_info = company_data['company_info']
     company_name = company_data['company_name']
     industry = company_data['industry']
@@ -105,7 +73,6 @@ async def generate_all_themes(company_data):
     prompt = f""" Generate two social media post themes per month using the company details below:
                 Company Name: {company_name}
                 Address: {address}
-                Language: {language}
                 Company Information: {company_info}
                 Industry: {industry}
                 Keywords: {keywords}
@@ -115,16 +82,9 @@ async def generate_all_themes(company_data):
                 products = {products}
                 product_categories = {product_categories}
 
-                **Instructions**
-
-                - If Address is not provided or is invalid, Use the Company Information to determine the regional  language, and generate the themes in that language only.
-
-                - If Address is provided and is valid, Use the Language field , and generate the themes in that language only.
-
-                - Generate all monthly themes strictly based on local seasonal patterns, festivals, and cultural observances in that country only.
-
-                - Exclude holidays or events not celebrated or widely recognized in that region (e.g., exclude “Thanksgiving” or “Fourth of July” for European countries).
-
+                Determine the location from the provided {address} and identify its country. Use the {address} to determine the regional language, and generate the themes in that language only.
+                Generate all monthly themes strictly based on local seasonal patterns, festivals, and cultural observances in that country only.
+                Exclude holidays or events not celebrated or widely recognized in that region (e.g., exclude “Thanksgiving” or “Fourth of July” for European countries).
                 If a month does not have a major event, base the theme on seasonal lifestyle or weather trends relevant to that country.
                 Ensure every theme’s title and description clearly match local culture and climate.
                 Return 12 months of creative themes in the exact JSON format required.
@@ -175,7 +135,7 @@ def generate_theme(company_data, month, existing_themes=None):
         
         Please generate COMPLETELY DIFFERENT themes that are still relevant for the month and company.
         """
-
+    
     prompt = f"""
             Generate two engaging social media post *themes* for the month of **{month}** for this company.
             Determine the location from the provided {address} and identify its country. Use the {address} to determine the regional language, and generate the themes in that language only.
@@ -280,7 +240,6 @@ def generate_instagram_post(company_data, theme, theme_description):
             • Include a clear call-to-action
             • Keep it informative but fun and engaging
             • Use line breaks for easy reading
-            • Shouldn't contain any hashtags.
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
@@ -333,7 +292,6 @@ def generate_linkedin_post(company_data, theme, theme_description):
             • Include valuable insights or data points
             • Professional call-to-action
             • Mix expertise with approachability
-            • Shouldn't contain any hashtags.
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
@@ -386,7 +344,6 @@ def generate_facebook_post(company_data, theme, theme_description):
             • Encourage community interaction and sharing
             • Tell a story or share relatable content
             • Clear, friendly call-to-action
-            • Shouldn't contain any hashtags.
 
             OUTPUT FORMAT:
             Return valid JSON exactly as shown below. Do not include any other text.
@@ -542,7 +499,7 @@ def normalize_field(value):
 
 async def generate_image_prompt(caption: str, hashtags: list[str], overlay_text: str, image_analysis: dict):
     system_message = """
-    You are a professional marketing visual director specializing in professional photography for social media.
+    You are a professional marketing visual director specializing in hyper-realistic photography for social media.
     Your top priority is to match the company's established visual identity based on the provided `image_analysis`.
 
     Respond strictly in JSON format with the following fields:
@@ -613,3 +570,33 @@ async def generate_image_prompt(caption: str, hashtags: list[str], overlay_text:
     content = response.choices[0].message.content.strip()
     return json.loads(content)
 
+
+# import asyncio
+# ans = asyncio.run(generate_image_prompt(
+
+#     "Vintern är här, och det är den perfekta tiden att förvandla kalla dagar till heta affärer! ❄️🔥 Låt oss guida dig i att stärka relationerna med dina kunder och boosta din försäljning, oavsett hur kallt det blir utomhus. 🌬️✨ Har du redan en plan för att nå ut till dina kunder i vinter? Dela dina tankar med oss! 💬 Och kom ihåg, med vår smarta CRM-lösning blir din vardag mindre stressig och mer lönsam. 🚀💼", 
+    
+#     ["#Vinterförsäljning", "#CRM", "#Kundhantering", "#Försäljning","#Jakobsbergsgatan","#Stockholm","#Affärshantering"], 
+    
+#     "Optimera din vinterförsäljning",
+    
+#     {
+#         "composition_and_style": "**Camera Angles**: Various angles are used, including straightforward product shots and slightly elevated perspectives. **Reflections and Depth**: Some images may utilize reflections or depth to draw attention to the products. **Human Interaction**: There is no human interaction present; the focus is solely on the products. **Balance**: Each image maintains a balanced composition, highlighting the products without clutter.",
+
+#         "environment_settings": "**Type of Space**: The images represent a tech-centric environment, likely a modern retail space or online catalog for electronic gadgets. **Interior Design Details**: Predominantly minimalistic design with a focus on product visibility. The background is often plain or lightly textured to emphasize the products. **Lighting Fixtures**: Soft, even lighting is used to highlight the products without harsh shadows. **Decor Elements**: The styling is minimal with no excessive decor, allowing the products to remain the focal point. **Overall Mood**: The mood is contemporary and aligns with other tech retail spaces that emphasize clarity and function.",
+
+#         "image_types_and_animation": "**Image Types**: All images are static photos; no animated images, GIFs, or motion graphics are present. **Movement/Animation**: There are no dynamic elements or apparent movement within any of the images. **Format Usage**: The collection primarily consists of static images showcasing various tech products.",
+
+#         "keywords_for_ai_image_generation": "static photography, modern technology, sleek design, electronic gadgets, minimalistic, tech products, clean lines, neutral color palette, polished surfaces, soft lighting, product focus, minimal decor, innovative design, convenience, sophisticated atmosphere, consumer electronics, digital displays, modern retail, tech-savvy, aesthetic appeal",
+
+#         "lighting_and_color_tone": "**Quality of Lighting**: The lighting is soft and natural, enhancing the product's visual appeal without overpowering colors. **Light Sources**: Primarily soft artificial lighting, possibly with some natural light effects in the background. **Color Palette**: The images utilize neutral tones like black, white, and grey, with some accent colors (e.g., blue, green) on certain products. **Surface Qualities**: Surfaces appear polished and smooth, contributing to the modern aesthetic.",
+        
+#         "subjects_and_people": "**Demographics**: No people are present in the images; they focus solely on the products. **Emotions**: As there are no individuals, no facial expressions or emotions are displayed. **Attire**: Not applicable due to the absence of people. **Activities**: The images capture the products in a straightforward manner, showcasing their design and features.",
+        
+#         "technology_elements": "**Visible Tech Equipment**: All images feature various tech products, including speakers, headphones, chargers, and smart devices. **Screens and Displays**: Some products include digital displays (e.g., charging indicators). **Technology Integration**: The products are presented in a way that emphasizes modern technology's role in daily life. **Modern vs. Traditional**: The images lean heavily towards modern elements, showcasing sleek designs and advanced features.",
+
+#         "theme_and_atmosphere": "**Overall Theme**: The images convey a modern and sleek atmosphere centered around technology and innovation. **Evoked Feelings**: The space should evoke a sense of sophistication, convenience, and modernity, appealing to tech-savvy consumers. **Emotional Tone**: The tone is clean and inviting, focusing on functionality and aesthetic appeal."
+#     }))
+
+
+# print(ans)
