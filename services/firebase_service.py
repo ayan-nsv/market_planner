@@ -1,16 +1,15 @@
-import logging
+
 import os
-from typing import Optional, Dict, Any
-from datetime import datetime, timezone
 from config.firebase_config import get_firebase_client
 import tempfile
 import os as _os
 
 from dotenv import load_dotenv
+from utils.logger import setup_logger
 
 load_dotenv()
 
-logger = logging.getLogger(__name__)
+logger = setup_logger("marketing-app")
 
 storage_client, db = get_firebase_client()
 
@@ -52,35 +51,6 @@ async def upload_image(image_bytes: bytes, path: str, content_type: str = "image
     except Exception as e:
         logger.error(f"Failed to upload image to {path}: {str(e)}")
         raise Exception(f"Upload failed: {str(e)}")
-
-
-
-
-
-async def save_url_to_db(content_id: str, image_url: str, channel: str, company_id: str, additional_data: Optional[Dict[str, Any]] = None):
-   
-    try:
-        collection_name = f"{channel}_posts"
-        doc_ref = db.collection(collection_name).document(company_id).collection("image").document(content_id)
-        
-        # Prepare update data
-        update_data = {
-            "img_url": image_url,
-            "created_at": datetime.now(timezone.utc),
-            "updated_at": datetime.now(timezone.utc)
-        }
-        
-        if additional_data:
-            update_data.update(additional_data)
-        
-        doc_ref.set(update_data)
-        
-        logger.info(f"Image metadata saved for images/{content_id}")
-        
-    except Exception as e:
-        logger.error(f"Failed to save image metadata for images/{content_id}: {str(e)}")
-        raise Exception(f"Metadata save failed: {str(e)}")
-
 
 
 

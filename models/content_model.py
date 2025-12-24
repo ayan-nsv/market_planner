@@ -57,5 +57,8 @@ class ReframeImageRequest(BaseModel):
     channel: str
     target_ratio: int # 1:1 (Square)default  3:2 (Landscape)  2:3 (Portrait / Vertical)
 
-
+class GeneratePostsRequest(BaseModel):
+    company_id: str
+    brand_name: str
+    channel: str
 

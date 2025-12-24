@@ -1,14 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from models.theme_model import ThemeRequest
 from services.gpt_service import generate_all_themes, generate_theme
 
 from google.cloud import firestore
-from fastapi import Depends
 from config.firebase_config import get_firestore_client
+
+from cache.redis_config import redis_set, redis_get, redis_delete
 
 import json
 from utils.logger import setup_logger
-
+from datetime import datetime
 logger = setup_logger("marketing-app")
 
 router = APIRouter()
@@ -48,23 +49,49 @@ def ensure_all_months(themes):
 
 # Get a single theme from a month
 @router.get("/themes/{company_id}/{month_id}")
-def get_theme(company_id: str, month_id: int, db: firestore.Client = Depends(get_db)):
+async def get_theme(company_id: str, month_id: int, db: firestore.Client = Depends(get_db)):
     try:
+        # Try to get from cache first
+        cached_data = await redis_get(f"month_theme_{company_id}_{month_id}")
+        if cached_data:
+            try:
+                theme_data = cached_data
+                logger.info(f"✅ Theme fetched from redis successfully for company {company_id} and month {month_id}")
+                return theme_data
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse cached theme for {company_id} and month {month_id}, fetching from DB")
+                logger.info(f"❌ Theme not found in redis for company {company_id} and month {month_id}")
+
         doc_ref = db.collection("themes").document(company_id).collection("months").document(str(month_id))
         doc = doc_ref.get()
         if not doc.exists:
             logger.error(f"Theme for month {month_id} not found")
             raise HTTPException(status_code=404, detail=f"Theme for month {month_id} not found")
         logger.info(f"Theme for month {month_id} fetched successfully: {doc.to_dict()}")
-        return doc.to_dict()
+
+        # Save theme to redis (with fallback)
+        theme_dict = doc.to_dict()
+        if await redis_set(f"month_theme_{company_id}_{month_id}", json.dumps(theme_dict)):
+            logger.info(f"✅ Theme saved to redis successfully for company {company_id} and month {month_id}")
+        else:
+            logger.warning(f"⚠️ Failed to save theme to redis for company {company_id} and month {month_id}, continuing anyway")
+        return theme_dict
+
     except Exception as e:
         logger.error(f"Error getting theme for month {month_id}: {str(e)}")
         raise HTTPException(status_code=404, detail=f"Could not get theme for month {month_id}: {str(e)}")
 
 
 @router.post("/themes/{company_id}/{month_id}/regenerate")
-def regenerate_month_theme(company_id: str, month_id: int, db: firestore.Client = Depends(get_db)):
+async def regenerate_month_theme(company_id: str, month_id: int, db: firestore.Client = Depends(get_db)):
     try:
+        # Invalidate cache before regeneration
+        if await redis_delete(f"month_theme_{company_id}_{month_id}"):
+            logger.info(f"✅ Theme removed from redis successfully for company {company_id} and month {month_id}")
+        
+        # Also invalidate all themes cache
+        await redis_delete(f"all_themes_{company_id}")
+
         # Validate month_id
         if month_id < 1 or month_id > 12:
             logger.error(f"Invalid month_id: {month_id}")
@@ -101,6 +128,24 @@ def regenerate_month_theme(company_id: str, month_id: int, db: firestore.Client 
         # Update Firestore
         month_ref.set(month_data, merge=True)
         logger.info(f"Theme updated successfully for {month_name}: {month_data.get('themes', [])}")
+
+        # Save theme to redis (with fallback)
+        if await redis_set(f"month_theme_{company_id}_{month_id}", json.dumps(month_data)):
+            logger.info(f"✅ Theme saved to redis successfully for company {company_id} and month {month_id}")
+        else:
+            logger.warning(f"⚠️ Failed to save theme to redis for company {company_id} and month {month_id}, continuing anyway")
+        
+        # Invalidate all themes cache
+        await redis_delete(f"all_themes_{company_id}")
+
+        ## maintain the count of themes generated in the database
+        year = datetime.now().year
+        month = datetime.now().month
+        usage_ref = db.collection("usage").document(company_id).collection(str(year)).document(str(month))
+        usage_ref.set({
+            "theme_regeneration": firestore.Increment(1)
+        }, merge=True)
+        
         return {
             "data": month_data,
         }
@@ -141,6 +186,20 @@ async def generate_all_themes_route(company_id: str, db: firestore.Client = Depe
             months_ref.document(str(month_id)).set(month)
 
         logger.info(f"All themes generated successfully for company {company_id}")
+
+        # Save themes to redis (with fallback)
+        if await redis_set(f"all_themes_{company_id}", json.dumps(themes)):
+            logger.info(f"✅ All themes saved to redis successfully for company {company_id}")
+        else:
+            logger.warning(f"⚠️ Failed to save themes to redis for company {company_id}, continuing anyway")
+        
+        ## maintain the count of themes generated in the database
+        year = datetime.now().year
+        month = datetime.now().month
+        usage_ref = db.collection("usage").document(company_id).collection(str(year)).document(str(month))
+        usage_ref.set({
+            "all_theme_regeneration": firestore.Increment(1)
+        }, merge=True)
         return {"message": "All themes generated successfully"}
 
     except Exception as e:
@@ -148,8 +207,22 @@ async def generate_all_themes_route(company_id: str, db: firestore.Client = Depe
         raise HTTPException(status_code=500, detail=f"Error generating themes: {str(e)}")
 
 @router.get("/themes/{company_id}")
-def get_all_themes(company_id: str, db: firestore.Client = Depends(get_db)):
+async def get_all_themes(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
+        # Try to get from cache first
+        cached_data = await redis_get(f"all_themes_{company_id}")
+        if cached_data:
+            try:
+                themes_data = cached_data
+                logger.info(f"✅ Themes fetched from redis successfully for company {company_id}")
+                return {
+                    "data": themes_data
+                }
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse cached themes for {company_id}, fetching from DB")
+
+        logger.info(f"❌ Themes not found in redis for company {company_id}")
+
         months_ref = db.collection("themes").document(company_id).collection("months")
         month_docs = months_ref.stream() 
 
@@ -162,6 +235,12 @@ def get_all_themes(company_id: str, db: firestore.Client = Depends(get_db)):
         if not data:
             logger.error(f"No themes found for company {company_id}")
             raise HTTPException(status_code=404, detail="No themes found for this company")
+
+        # Save themes to redis (with fallback)
+        if await redis_set(f"all_themes_{company_id}", json.dumps(data)):
+            logger.info(f"✅ All themes saved to redis successfully for company {company_id}")
+        else:
+            logger.warning(f"⚠️ Failed to save themes to redis for company {company_id}, continuing anyway")
 
         return {
             "status": "success",

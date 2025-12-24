@@ -5,10 +5,11 @@ from services.gpt_service import generate_facebook_post, generate_linkedin_post,
 from fastapi import Depends
 from google.cloud import firestore
 from config.firebase_config import get_firestore_client
-
+from datetime import datetime
 from services.gpt_service import generate_image_prompt
 
 from utils.logger import setup_logger
+
 
 router = APIRouter()
 
@@ -44,7 +45,6 @@ async def generate_linkedin_planner(planner: PlannerRequest, company_id: str, db
 
         channel = generated_planner_data.get("channel", "").lower().strip()
 
-        # image_prompt = generated_planner_data.get("image_prompt", "")
 
 
         caption = generated_planner_data.get("caption", "")
@@ -62,8 +62,9 @@ async def generate_linkedin_planner(planner: PlannerRequest, company_id: str, db
                 "theme_and_atmosphere": company_data.get("theme_and_atmosphere", ""),
             }
 
-        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis)
+        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis, planner.image_type)
         image_prompt = generated_image_prompt.get("image_prompt", "")
+        print(image_prompt)
 
         final_data = {
                 "channel": channel,
@@ -78,6 +79,14 @@ async def generate_linkedin_planner(planner: PlannerRequest, company_id: str, db
             company_id,
             channel,
         )
+        ## maintain the count of images generated in the database
+        year = datetime.now().year
+        month = datetime.now().month
+        usage_ref = db.collection("usage").document(company_id).collection(str(year)).document(str(month))
+        usage_ref.set({
+            "linkedin_planner_count": firestore.Increment(1)
+        }, merge=True)
+
         return final_data
     except HTTPException as http_exc:
         logger.warning(
@@ -134,8 +143,9 @@ async def generate_facebook_planner(planner: PlannerRequest, company_id: str, db
                 "technology_elements": company_data.get("technology_elements", ""),
                 "theme_and_atmosphere": company_data.get("theme_and_atmosphere", ""),
             }
-        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis)
+        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis, planner.image_type)
         image_prompt = generated_image_prompt.get("image_prompt", "")
+        print(image_prompt)
 
         final_data = {
                 "channel": channel,
@@ -150,6 +160,13 @@ async def generate_facebook_planner(planner: PlannerRequest, company_id: str, db
             company_id,
             channel,
         )
+        ## maintain the count of images generated in the database
+        year = datetime.now().year
+        month = datetime.now().month
+        usage_ref = db.collection("usage").document(company_id).collection(str(year)).document(str(month))
+        usage_ref.set({
+            "facebook_planner_count": firestore.Increment(1)
+        }, merge=True)
         return final_data
     except HTTPException as http_exc:
         logger.warning(
@@ -207,8 +224,9 @@ async def generate_instagram_planner(planner: PlannerRequest, company_id: str, d
             }
 
 
-        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis)
+        generated_image_prompt = await generate_image_prompt(caption, hashtags, overlay_text, image_analysis, planner.image_type)
         image_prompt = generated_image_prompt.get("image_prompt", "")
+        print(image_prompt)
         final_data = {
                 "channel": channel,
                 "image_prompt": image_prompt,
@@ -222,6 +240,14 @@ async def generate_instagram_planner(planner: PlannerRequest, company_id: str, d
             company_id,
             channel,
         )
+        ## maintain the count of images generated in the database
+        year = datetime.now().year
+        month = datetime.now().month
+        usage_ref = db.collection("usage").document(company_id).collection(str(year)).document(str(month))
+        usage_ref.set({
+            "instagram_planner_count": firestore.Increment(1)
+        }, merge=True)
+
         return final_data
     except HTTPException as http_exc:
         logger.warning(
@@ -245,13 +271,20 @@ async def generate_instagram_planner(planner: PlannerRequest, company_id: str, d
     description="Regenerate caption for a social media post using the same image prompt, hashtags and overlay text",
     response_description="Regenerated caption"
 )
-async def regenerate_caption_route(caption_regenerate: CaptionRegenerateRequest):
+async def regenerate_caption_route(caption_regenerate: CaptionRegenerateRequest, db: firestore.Client = Depends(get_db)):
     try:
-        generated_caption = await regenerate_caption(caption_regenerate.caption, caption_regenerate.hashtags, caption_regenerate.overlay_text)
+        generated_caption = regenerate_caption(caption_regenerate.caption, caption_regenerate.hashtags, caption_regenerate.overlay_text)
 
         if not generated_caption:
             raise HTTPException(status_code=400, detail="Failed to regenerate caption")
-            
+
+        ## maintain the count of captions regenerated in the database
+        year = datetime.now().year
+        month = datetime.now().month
+        usage_ref = db.collection("usage").document(caption_regenerate.company_id).collection(str(year)).document(str(month))
+        usage_ref.update({
+            "caption_regenerate_count": firestore.Increment(1)
+        })
         return {"caption": generated_caption.get("caption", "")}
     except HTTPException as e:
         raise

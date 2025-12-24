@@ -2,7 +2,7 @@ import uuid
 import gc
 import time
 from services.gemini_service import generate_image
-from services.firebase_service import upload_image, save_url_to_db
+from services.firebase_service import upload_image
 from utils.logger import setup_logger
 
 logger = setup_logger("marketing-app")
@@ -56,7 +56,6 @@ async def process_company(planner_info: dict) -> str:
 
         channel = planner_info["channel"].lower()
         company_id = planner_info.get('company_id')
-        # await save_url_to_db(content_id, url, channel, company_id, additional_data)
         
         total_ms = int((time.perf_counter() - total_t0) * 1000)
         logger.info(
@@ -72,6 +71,5 @@ async def process_company(planner_info: dict) -> str:
             del image_bytes
             gc.collect()
         raise e
-
 
 

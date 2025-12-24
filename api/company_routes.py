@@ -1,12 +1,20 @@
-from fastapi import APIRouter, HTTPException
-from google.cloud import firestore
-from models.company_model import CompanyRequest
+import json
+from datetime import datetime
 
-from fastapi import Depends
+from fastapi import APIRouter, HTTPException, Depends
+from models.company_model import CompanyRequest, UsageRequest
 from config.firebase_config import get_firestore_client
 
 from api.theme_routes import  generate_all_themes_route
+
 from utils.logger import setup_logger
+
+from cache.redis_config import redis_set, redis_get, redis_delete, json_dumps_firestore
+
+
+from google.cloud import firestore
+from google.cloud.firestore_v1 import DocumentReference, GeoPoint
+from google.cloud.firestore_v1._helpers import DatetimeWithNanoseconds
 
 
 logger = setup_logger("marketing-app")
@@ -18,13 +26,39 @@ async def get_db():
 router = APIRouter()
 
 
+def convert_firestore_datetimes(data):
+    if isinstance(data, dict):
+        return {k: convert_firestore_datetimes(v) for k, v in data.items()}
+
+    if isinstance(data, list):
+        return [convert_firestore_datetimes(item) for item in data]
+
+    # Firestore datetime -> ISO string
+    if isinstance(data, (DatetimeWithNanoseconds, datetime)):
+        return data.isoformat()
+
+    # Optional: Handle Firestore GeoPoints
+    if isinstance(data, GeoPoint):
+        return {"latitude": data.latitude, "longitude": data.longitude}
+
+    # Optional: Handle Firestore DocumentReference
+    if isinstance(data, DocumentReference):
+        return data.path
+
+    return data
+
+
+
+
 @router.get("/company")
 def get_companies(db: firestore.Client = Depends(get_db), page: int = 1, limit: int = 5):
     try:
         companies_ref = db.collection("companies")
         docs = companies_ref.limit(limit).offset((page-1)*limit).stream()
         companies = [{**doc.to_dict(), "id": doc.id} for doc in docs]
-        logger.info(f"Companies fetched successfully: {companies}")
+        # Convert Firestore datetime objects to ISO strings for JSON serialization
+        companies = [convert_firestore_datetimes(company) for company in companies]
+        logger.info(f"Companies fetched successfully")
         return {
             "data": companies,
             "page": page,
@@ -33,6 +67,7 @@ def get_companies(db: firestore.Client = Depends(get_db), page: int = 1, limit: 
     except Exception as e:
         logger.error(f"Error fetching companies: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching companies: {str(e)}")
+
 
 
 @router.post("/company")
@@ -79,16 +114,42 @@ async def create_company(company: CompanyRequest, db: firestore.Client = Depends
             "lighting_and_color_tone": company.lighting_and_color_tone or "",
             "image_types_and_animation": company.image_types_and_animation or "",
             "keywords_for_ai_image_generation": company.keywords_for_ai_image_generation or "",
+            "image_urls": company.image_urls or [],
 
             "created_at": firestore.SERVER_TIMESTAMP,
             "updated_at": firestore.SERVER_TIMESTAMP    
         }
         doc_ref = db.collection("companies").add(company_data)
         logger.info(f"Company '{company.company_name}' created successfully: {doc_ref[1].id}")
+
+        # Note: company_data contains SERVER_TIMESTAMP placeholders, so we don't cache immediately
+        # The data will be cached when fetched via get_company endpoint
+        company_id = doc_ref[1].id
+        default_channel_config = {
+            "company_id": company_id,
+            "instagram_post_count": 1,
+            "facebook_post_count": 1,
+            "linkedin_post_count": 1,
+            "email_campaign_count": 1,
+            "blog_post_count": 1,
+
+            "instagram_active": True,
+            "facebook_active": True,
+            "linkedin_active": True,
+            "email_campaign_active": True,
+            "blog_post_active": True,
+
+            "created_at": firestore.SERVER_TIMESTAMP,
+            "updated_at": firestore.SERVER_TIMESTAMP
+        }
+        channel_config_doc_ref = db.collection("channel_config").document(company_id)
+        channel_config_doc_ref.set(default_channel_config, merge=True)
+        logger.info(f"✅ Channel config created successfully for company {company_id} : {doc_ref[1].id}")
+
         return {
             "status": "success",
-            "message": f"Company '{company.company_name}' created successfully",
-            "id": doc_ref[1].id,
+            "message": f"✅ Company '{company.company_name}' created successfully",
+            "id": company_id,
             "company_name": company.company_name
         }
         
@@ -100,8 +161,19 @@ async def create_company(company: CompanyRequest, db: firestore.Client = Depends
 
 
 @router.get("/company/{company_id}")
-def get_company(company_id: str, db: firestore.Client = Depends(get_db)):
+async def get_company(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
+        # Try to get from cache first
+        cached_data = await redis_get(f"company_{company_id}")
+        if cached_data:
+            try:
+                company_data = cached_data
+                logger.info(f"✅ Cache hit for {company_id}")
+                return company_data
+            except json.JSONDecodeError:
+                logger.warning(f"Failed to parse cached data for {company_id}, fetching from DB")
+        
+        logger.info(f"❌ Cache miss for {company_id}")
         doc_ref = db.collection("companies").document(company_id)
         doc = doc_ref.get()
         if not doc.exists:
@@ -109,8 +181,20 @@ def get_company(company_id: str, db: firestore.Client = Depends(get_db)):
 
         company_data = doc.to_dict()
         company_data['company_id'] = company_id
-        logger.info(f"Company '{company_id}' fetched successfully: {company_data}")
+        logger.info(f"Company '{company_id}' fetched successfully")
+
+        # Convert Firestore datetime objects to ISO strings for JSON serialization
+        company_data_serialized = convert_firestore_datetimes(company_data)
+
+        # Save company data to redis (with fallback - continue even if cache fails)
+        if await redis_set(f"company_{company_id}", json_dumps_firestore(company_data_serialized), ttl=604800): # 7 days in seconds
+            logger.info(f"✅ Company '{company_id}' saved to redis successfully")
+        else:
+            logger.warning(f"⚠️ Failed to save company '{company_id}' to redis, continuing anyway")
+
         return company_data
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error fetching company '{company_id}': {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching company: {str(e)}")
@@ -121,6 +205,9 @@ def get_company(company_id: str, db: firestore.Client = Depends(get_db)):
 @router.put("/company/{company_id}")
 async def update_company(company_id: str, company: CompanyRequest, db: firestore.Client = Depends(get_db)):
     try:
+        # Invalidate cache before update
+        if await redis_delete(f"company_{company_id}"):
+            logger.info(f"✅ Company '{company_id}' removed from redis successfully")
 
         doc_ref = db.collection("companies").document(company_id)
         doc = doc_ref.get()
@@ -165,6 +252,21 @@ async def update_company(company_id: str, company: CompanyRequest, db: firestore
 
         if update_data:
             doc_ref.update(update_data)
+            
+            # Fetch updated company data to cache the complete record
+            updated_doc = doc_ref.get()
+            if updated_doc.exists:
+                full_company_data = updated_doc.to_dict()
+                full_company_data['company_id'] = company_id
+                
+                # Convert Firestore datetime objects to ISO strings for JSON serialization
+                full_company_data_serialized = convert_firestore_datetimes(full_company_data)
+                
+                # Save full company data to redis (with fallback)
+                if await redis_set(f"company_{company_id}", json_dumps_firestore(full_company_data_serialized), ttl=604800): # 7 days in seconds
+                    logger.info(f"✅ Company '{company_id}' saved to redis successfully")
+                else:
+                    logger.warning(f"⚠️ Failed to save company '{company_id}' to redis, continuing anyway")
 
             # Run theme regeneration in background
             response_content =  await generate_all_themes_route(company_id, db)
@@ -178,6 +280,7 @@ async def update_company(company_id: str, company: CompanyRequest, db: firestore
                 "message": f"Company {company_id} updated successfully.",
                 "updated_fields": list(update_data.keys())
             }
+        
         logger.info(f"Company '{company_id}' updated successfully: {update_data}")
         return {"status": "success", "message": "No fields to update"}
 
@@ -189,8 +292,12 @@ async def update_company(company_id: str, company: CompanyRequest, db: firestore
 
 
 @router.delete("/company/{company_id}")
-def delete_company(company_id: str, db: firestore.Client = Depends(get_db)):
+async def delete_company(company_id: str, db: firestore.Client = Depends(get_db)):
     try:
+        # Remove from redis
+        if await redis_delete(f"company_{company_id}"):
+            logger.info(f"✅ Company '{company_id}' removed from redis successfully")
+
         doc_ref = db.collection("companies").document(company_id)
         doc = doc_ref.get()
         if not doc.exists:
@@ -222,3 +329,23 @@ def delete_company(company_id: str, db: firestore.Client = Depends(get_db)):
     except Exception as e:
         logger.error(f"Error deleting company '{company_id}': {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error deleting company: {str(e)}")
+
+
+
+############################################# get usage for a company ###########################################
+
+@router.post("/compan/usage")
+async def get_usage(request: UsageRequest, db: firestore.Client = Depends(get_db)):
+    try:
+        if not request.company_id or not request.year or not request.month:
+            raise HTTPException(status_code=400, detail="Company ID, year, and month are required")
+        usage_ref = db.collection("usage").document(request.company_id).collection(request.year).document(request.month).get()
+        if not usage_ref.exists:
+            raise HTTPException(status_code=404, detail=f"Usage not found for company {request.company_id} in {request.year} {request.month}")
+        usage_data = usage_ref.to_dict()
+        return usage_data
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting usage for {request.company_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error getting usage: {str(e)}")

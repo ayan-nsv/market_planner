@@ -28,9 +28,13 @@ class CompanyRequest(BaseModel):
     technology_elements: Optional[str] = None
     theme_and_atmosphere: Optional[str] = None
     analyzed_images: Optional[List[str]] = None
+    image_urls: Optional[List[str]] = None
 
 
     
-    
+class UsageRequest(BaseModel):
+    company_id: str
+    year: str
+    month: str
 
 
